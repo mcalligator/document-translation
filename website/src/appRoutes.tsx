@@ -28,6 +28,7 @@ export default function AppRoutes() {
 					/>
 					<Route path="/translation/new/" element={<TranslationNew />} />
 					<Route path="/translation/quick/" element={<TranslationQuick />} />
+					<Route path="/translation/admin/" element={<TranslationAdmin />} />
 				</>
 			)}
 			{!features.translation && features.readable && (

@@ -1,0 +1,6 @@
+{"deploymentConfig": {
+    "dataHost": "localhost",
+    "dataScheme": "http",
+    "dataPort": 3001
+    }
+}
