@@ -8,14 +8,17 @@ export function amplifyConfigure() {
 	const authConfig: ResourcesConfig = {
 		Auth: {
 			Cognito: {
-				userPoolId: cfnOutputs.awsUserPoolsId,
-				userPoolClientId: cfnOutputs.awsUserPoolsWebClientId,
+				// userPoolId: cfnOutputs.awsUserPoolsId,
+				userPoolId: "eu-west-2_KTJgXeBDx",
+				// userPoolClientId: cfnOutputs.awsUserPoolsWebClientId,
+				userPoolClientId: "12oie8haqim86oiem5hgisjub5",
 				identityPoolId: cfnOutputs.awsCognitoIdentityPoolId,
 				allowGuestAccess: false,
 				loginWith: {
 					oauth: {
 						domain:
-							cfnOutputs.awsCognitoOauthDomain +
+							// cfnOutputs.awsCognitoOauthDomain +
+							"https://document-translation-auth-905418338641-main" +
 							".auth." +
 							cfnOutputs.awsRegion +
 							".amazoncognito.com",
