@@ -35,6 +35,11 @@ export default function Navigation() {
 					text: t("translation_quick_text"),
 					href: "/translation/quick",
 				},
+				{
+					type: "link",
+					text: "Administer Users",
+					href: "/translation/admin",
+				},
 			],
 		});
 	}
