@@ -236,6 +236,7 @@ export class pipelineStack extends cdk.Stack {
 						"aws appsync get-introspection-schema --api-id=${awsAppsyncId} --format SDL ${GRAPHQLSCHEMAFILE}",
 						"cd ${WEBDIR_GRAPHQL}",
 						"~/.amplify/bin/amplify codegen",
+						"touch subscriptions.ts",	// Temporary workaround for bug in deployment
 						// BUILD REACT
 						// BUILD REACT | FEATURES
 						"cd ${WEBDIR_SRC}",
