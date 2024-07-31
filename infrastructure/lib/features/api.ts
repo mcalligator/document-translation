@@ -55,6 +55,31 @@ export class dt_api extends Construct {
 				tempPasswordValidity: cdk.Duration.days(3),
 			};
 		}
+		let standardAttributes: undefined | cognito.StandardAttributes = undefined;
+		standardAttributes = {
+			givenName: {
+				required: true,
+				mutable: true,
+			},
+			familyName: {
+				required: true,
+				mutable: true,
+			},
+			email: {
+				required: true,
+				mutable: true,
+			}
+		};
+		let customAttributes: undefined | Record<string, cognito.ICustomAttribute> = undefined;
+		customAttributes = {
+			tenantId: new cognito.StringAttribute({
+				 mutable: true }),
+		};
+		let userInvitation: undefined | object = undefined;
+		userInvitation = {
+			emailSubject: 'Invite to log into City Trax Translate',
+			emailBody: 'Hello {given_name}, you have been invited to log in to City Trax Translate.  Your temporary password is {####}'
+		};
 		let mfa: undefined | cognito.Mfa = undefined;
 		switch (props.cognitoLocalUsersMfa) {
 			case "required":
@@ -88,9 +113,38 @@ export class dt_api extends Construct {
 			mfa,
 			mfaSecondFactor,
 			selfSignUpEnabled: false,
+			userInvitation,
+			signInAliases: {
+				username: false,
+				email: true,
+				phone: false
+			},
+			standardAttributes,
+			customAttributes,
+			signInCaseSensitive: false,
+			autoVerify: {
+				email: true,
+			},
+			keepOriginal: {
+				email: true,
+			},
 			removalPolicy: props.removalPolicy, // ASM-CFN1
 			accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+			deviceTracking: {
+				challengeRequiredOnNewDevice: true,
+				deviceOnlyRememberedOnUserPrompt: true,
+			},
+			
 		});
+		// Properties added: signInAliases, signInCaseSensitive
+		// Properties to be added: required user attributes firstName, lastName, and custom:tenantId; Cognito-assisted verification
+		//	 and confirmation; verifying attribute changes; temporary password validity duration; remember user device (optional);
+		//   invitation email template;
+		// Verification email not required in addition to invitation email for admin-created user accounts
+		// To do: 
+		// 		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
+		// 		2. Establish which property determines that users must verify an updated email address. 
+		// 		3. Try out certificate for custom Cognito domain
 		if (!props.cognitoLocalUsers) {
 			NagSuppressions.addResourceSuppressions(
 				this.userPool,
@@ -136,7 +190,8 @@ export class dt_api extends Construct {
 		const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
 		cfnUserPool.userPoolAddOns = {
 			// See https://github.com/aws/aws-cdk/issues/7405
-			advancedSecurityMode: "ENFORCED", // ASM-COG3
+			// advancedSecurityMode: "ENFORCED", // ASM-COG3
+			advancedSecurityMode: "OFF", // To reduce costs during development; enable for production
 		};
 
 		// COGNITO | USERPOOL | DOMAIN
