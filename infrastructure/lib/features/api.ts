@@ -233,6 +233,19 @@ export class dt_api extends Construct {
 			supportedIdentityProviders.push(
 				cognito.UserPoolClientIdentityProvider.COGNITO,
 			);
+			if (cfnUserPool.userPoolAddOns.advancedSecurityMode === "OFF") {
+				NagSuppressions.addResourceSuppressions(
+					this.userPool,
+					[
+						{
+							id: "AwsSolutions-COG3",
+							reason: "Advanced Security only necessary for production environment",
+						}
+					],
+					true,
+				);
+
+			}
 		}
 		// COGNITO | USERPOOL | CLIENT
 		this.userPoolClient = this.userPool.addClient("webClient", {
