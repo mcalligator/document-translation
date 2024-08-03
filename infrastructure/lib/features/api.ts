@@ -78,7 +78,7 @@ export class dt_api extends Construct {
 		let userInvitation: undefined | object = undefined;
 		userInvitation = {
 			emailSubject: 'Invite to log into City Trax Translate',
-			emailBody: 'Hello {given_name}, you have been invited to log in to City Trax Translate.  Your temporary password is {####}'
+			emailBody: 'Hello {username}, you have been invited to log in to City Trax Translate.  Your temporary password is {####}'
 		};
 		let mfa: undefined | cognito.Mfa = undefined;
 		switch (props.cognitoLocalUsersMfa) {
