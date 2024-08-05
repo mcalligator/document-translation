@@ -7,12 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { SideNavigation } from "@cloudscape-design/components";
 
 import { CreateJob as ReadableCreateJob } from "../../util/readableCreateJob";
+import { title } from "process";
 
 const features = require("../../features.json");
 
 export default function Navigation() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
+
+	const userRole = "admin";	// Temporarily hard-coded to display Administration section
 
 	const navigationItems = [];
 	if (features.translation) {
@@ -55,6 +58,20 @@ export default function Navigation() {
 					type: "link",
 					text: t("generic_create_new"),
 					href: "/readable/view",
+				},
+			],
+		});
+	}
+
+	if (userRole === "admin") {
+		navigationItems.push({
+			type: "section-group",
+			text: "Administration",
+			items: [
+				{
+					type: "link",
+					text: "Manage Users",
+					href: "/admin",
 				},
 			],
 		});
