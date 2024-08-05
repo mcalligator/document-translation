@@ -65,7 +65,7 @@ export default function Navigation() {
 
 	if (userRole === "admin") {
 		navigationItems.push({
-			type: "section-group",
+			type: "section",
 			text: "Administration",
 			items: [
 				{
