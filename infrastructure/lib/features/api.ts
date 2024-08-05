@@ -79,7 +79,7 @@ export class dt_api extends Construct {
 		userInvitation = {
 			emailSubject: 'Invitation to use City Trax Translate',
 			emailBody: `This message has been sent to {username}.\n\n
-				Your administrator has invited you to use City Trax Translate.  To access it, click here: {##Verify Email##}.\n\n
+				Your administrator has invited you to use City Trax Translate.  The link to access it has been sent to you separately.\n\n
 				Your temporary password is {####}.\n\n
 				Kind regards,
 				City Trax`
