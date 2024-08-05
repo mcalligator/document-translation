@@ -77,8 +77,12 @@ export class dt_api extends Construct {
 		};
 		let userInvitation: undefined | object = undefined;
 		userInvitation = {
-			emailSubject: 'Invite to log into City Trax Translate',
-			emailBody: 'Hello {username}, you have been invited to log in to City Trax Translate.  Your temporary password is {####}'
+			emailSubject: 'Invitation to use City Trax Translate',
+			emailBody: `This message has been sent to {username}.\n\n
+				Your administrator has invited you to use City Trax Translate.  To access it, click here: {##Verify Email##}.\n\n
+				Your temporary password is {####}.\n\n
+				Kind regards,
+				City Trax`
 		};
 		let mfa: undefined | cognito.Mfa = undefined;
 		switch (props.cognitoLocalUsersMfa) {
@@ -136,11 +140,10 @@ export class dt_api extends Construct {
 			},
 			
 		});
-		// Properties added: signInAliases, signInCaseSensitive
-		// Properties to be added: required user attributes firstName, lastName, and custom:tenantId; Cognito-assisted verification
-		//	 and confirmation; verifying attribute changes; temporary password validity duration; remember user device (optional);
-		//   invitation email template;
-		// Verification email not required in addition to invitation email for admin-created user accounts
+		// Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template
+		// Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes; 
+		//	 temporary password validity duration; remember user device (optional);
+		// Verification email not required in addition to invitation email for admin-created user accounts - but how is account verified?
 		// To do: 
 		// 		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
 		// 		2. Establish which property determines that users must verify an updated email address. 

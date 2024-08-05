@@ -12,6 +12,7 @@ import ReadableView from "./page/readable/view";
 import TranslationHistory from "./page/translation/history";
 import TranslationNew from "./page/translation/new";
 import TranslationQuick from "./page/translation/quick";
+import TranslationAdmin from "./page/admin/TranslationAdmin";
 
 const features = require("./features.json");
 
@@ -28,6 +29,7 @@ export default function AppRoutes() {
 					/>
 					<Route path="/translation/new/" element={<TranslationNew />} />
 					<Route path="/translation/quick/" element={<TranslationQuick />} />
+					<Route path="/translation/admin/" element={<TranslationAdmin />} />
 				</>
 			)}
 			{!features.translation && features.readable && (
