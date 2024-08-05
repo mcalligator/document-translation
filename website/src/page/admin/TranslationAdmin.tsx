@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "@cloudscape-design/global-styles/index.css"
-import { Box, Button, Container, Form, Header, SpaceBetween } from "@cloudscape-design/components";
+import { Box, Button, Container, ContentLayout, Form, Header, SpaceBetween } from "@cloudscape-design/components";
 import { fetchAuthSession } from "@aws-amplify/auth";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 // import config from "./config.json" // with {type: 'json'};
@@ -142,15 +142,20 @@ function TranslationAdmin() {
 
   return (
     <>
-      <Container>
-        <Header
-          variant="h2"
-          description="Add, Edit, and Configure user accounts for Translate"
-        >
-          <SpaceBetween direction="horizontal" alignItems="end" size="xl">
-            Manage Users
-          </ SpaceBetween>
-        </Header >
+			<ContentLayout
+				header={
+					<SpaceBetween size="m">
+            <Header
+              variant="h2"
+              description="Add, Edit, and Configure user accounts for Translate"
+            >
+              <SpaceBetween direction="horizontal" alignItems="end" size="xl">
+                Manage Users
+              </ SpaceBetween>
+            </Header>
+					</SpaceBetween>
+				}
+			>
         <Form header={
           <p>
             <b>Entitlement</b>: {entitlement} named users ({users.length} registered)
@@ -190,7 +195,8 @@ function TranslationAdmin() {
             </SpaceBetween>
           </SpaceBetween>
         </Form>
-      </Container >
+      </ContentLayout>    
+
     </>
   )
 }
