@@ -24,9 +24,9 @@ export default function App() {
 			<Suspense fallback={null}>
 				<TopNavigation user={currentUser} />
 				<AppLayout
-					navigation={<SideNavigation />}
+					navigation={<SideNavigation user={currentUser}/>}
 					toolsHide
-					content={<AppRoutes />}
+					content={<AppRoutes user={currentUser}/>}
 				></AppLayout>
 				<Footer />
 			</Suspense>

@@ -38,6 +38,7 @@ export default function Header(user: {
 	const [visualMode, setVisualMode] = useVisualMode();
 
 	const username = user?.user?.currentUser?.username;
+	// console.log(`Full user info:\n ${JSON.stringify(user)}`);
 
 	const displayVisualModeIcon = () => {
 		if (visualMode === VisualModes.LIGHT) {
