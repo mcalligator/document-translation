@@ -11,9 +11,11 @@ import { title } from "process";
 
 const features = require("../../features.json");
 
-export default function Navigation() {
+export default function Navigation( user: any ) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
+
+	const groups : string[] = user?.user?.authSession?.tokens?.accessToken?.payload?.["cognito:groups"]
 
 	const userRole = "admin";	// Temporarily hard-coded to display Administration section
 
@@ -63,10 +65,10 @@ export default function Navigation() {
 		});
 	}
 
-	if (userRole === "admin") {
+	if (typeof(groups) !== 'undefined' && groups.includes('TenantAdmins')) {
 		navigationItems.push({
 			type: "section",
-			text: "Administration",
+			text: "Admin",
 			items: [
 				{
 					type: "link",

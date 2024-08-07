@@ -12,11 +12,14 @@ import ReadableView from "./page/readable/view";
 import TranslationHistory from "./page/translation/history";
 import TranslationNew from "./page/translation/new";
 import TranslationQuick from "./page/translation/quick";
-import TranslationAdmin from "./page/admin/TranslationAdmin";
+import AdminPanel from "./page/admin/AdminPanel";
+import { AuthSession } from "@aws-amplify/auth";
 
 const features = require("./features.json");
 
-export default function AppRoutes() {
+export default function AppRoutes(user: any ) {
+	const groups : string[] = user?.user?.authSession?.tokens?.accessToken?.payload?.["cognito:groups"]
+
 	return (
 		<Routes>
 			{features.translation && (
@@ -29,7 +32,6 @@ export default function AppRoutes() {
 					/>
 					<Route path="/translation/new/" element={<TranslationNew />} />
 					<Route path="/translation/quick/" element={<TranslationQuick />} />
-					<Route path="/translation/admin/" element={<TranslationAdmin />} />
 				</>
 			)}
 			{!features.translation && features.readable && (
@@ -42,6 +44,9 @@ export default function AppRoutes() {
 					<Route path="/readable/view/*" element={<ReadableView />} />
 					<Route path="/readable/print/*" element={<ReadablePrint />} />
 				</>
+			)}
+			{typeof(groups) !== 'undefined' && groups.includes('TenantAdmins') && (
+				<Route path="/admin/" element={<AdminPanel />} />
 			)}
 			<Route path="/help/" element={<Help />} />
 			<Route path="/signout/" element={<SignOut />} />
