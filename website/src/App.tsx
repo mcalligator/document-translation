@@ -18,6 +18,7 @@ import TopNavigation from "./page/partial/topNavigation";
 export default function App() {
 	amplifyConfigure();
 	const currentUser = useFederatedSignIn();
+	// console.log(`currentUser in App:\n${JSON.stringify(currentUser)}`);
 
 	return (
 		<>
