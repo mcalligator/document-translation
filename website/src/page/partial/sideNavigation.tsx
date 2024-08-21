@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 
 import { SideNavigation } from "@cloudscape-design/components";
 
-import checkAdmin from "../../util/checkAdmin";
 import { CreateJob as ReadableCreateJob } from "../../util/readableCreateJob";
+
+import checkAdmin from "../admin/checkAdmin";
 
 import { title } from "process";
 

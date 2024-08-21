@@ -16,7 +16,6 @@ export function useFederatedSignIn() {
   const [authSession, setAuthSession] = useState<AuthSession>();
   const [currentUser, setCurentUser] = useState<GetCurrentUserOutput>();
 
-  // console.log('Starting useFederatedSignIn...');
   useEffect(() => {
     const checkUserAuthStatus = async () => {
       try {

@@ -1,5 +1,3 @@
-import { Credentials } from "./typeExtensions";
-
 export default function checkAdmin(user: any) {
   // console.log(`User passed into checkAdmin:\n${JSON.stringify(user)}`);
   // const propertyPath: string = "[cognito:groups]";
