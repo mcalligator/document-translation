@@ -3,10 +3,10 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
-import checkAdmin from "./util/checkAdmin";
 import SignOut from "./util/signOut";
 
 import AdminPanel from "./page/admin/AdminPanel";
+import checkAdmin from "./page/admin/checkAdmin";
 import Help from "./page/help/help";
 import ReadableHistory from "./page/readable/history";
 import ReadablePrint from "./page/readable/print";

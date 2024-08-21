@@ -1,0 +1,82 @@
+* {
+  box-sizing: border-box;
+}
+
+table.admin {
+  width: 100%;
+  overflow: auto; /* Allow scrolling within the table */
+  display: grid;
+  grid-template-columns:
+    max-content
+    max-content
+    max-content
+    minmax(100px, max-content);
+  /* minmax(100px, max-content)
+    minmax(100px, max-content)
+    minmax(200px, max-content)
+    minmax(100px, max-content); */
+  /* border-collapse: collapse; /* Seems to have no effect*/
+  gap: 0.2rem;
+  /* padding: "8px"; /* Seems to have no effect*/
+}
+
+table.admin th {
+  position: relative;
+}
+
+table.admin th,
+table.admin td {
+  text-align: left;
+}
+
+table.admin th span,
+table.admin td span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: block;
+}
+
+table.admin thead,
+table.admin tbody,
+table.admin tr {
+  display: contents;
+}
+
+input {
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.centred {
+  padding-left: 1.1rem; /* Not ideal, but best current workaround to centre checkboxes under heading*/
+}
+
+input.error {
+  background: crimson;
+  color: crimson;
+}
+
+input.valid {
+  background: #fff;
+  color: #fff;
+}
+
+.resize-handle {
+  display: block;
+  position: absolute;
+  cursor: col-resize;
+  width: 7px;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  border-right: 2px solid transparent;
+}
+
+.resize-handle:hover {
+  border-color: #fff;
+}
+
+.resize-handle:active {
+  border-color: #517ea5;
+}

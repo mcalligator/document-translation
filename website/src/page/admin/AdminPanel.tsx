@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
+  Container,
   ContentLayout,
   Form,
   Header,
@@ -17,9 +18,10 @@ import {
 
 import { AuthSession } from "@aws-amplify/auth";
 
-import { extractField } from "../../util/checkAdmin";
 import { Credentials, Id, UserData } from "../../util/typeExtensions";
 
+import { extractField } from "./checkAdmin";
+import filterUsers from "./filterUsers";
 import UserTable from "./userTable";
 
 import {
@@ -35,11 +37,17 @@ function AdminPanel(currentUser: any) {
   //  1. Check for expired AWS Session Token and refresh.
   //  2. Retrieve Marketplace entitlement from relevant API when solution integrated.
   //  3. Create combined client-side and server-side filter for retrieved users.
-  //  4. Clear status message when condition no longer applies.
+  //  4. Clear status message when condition no longer applies - DONE (I think)
   //  5. Replace cognitoClient with shared component-level object.
   //  6. Get user.id for newly-created user in UserRow to be from server, not stale local value
+  //  7. After deleting user, disable Delete User button - DONE
+  //  8. Enable Cancel button functionality
+  //  9. Get Input fields for new users to be same width as those above when data being entered
+  // 10. Set initial text column widths to be that of longest content
+  // 11. Add pagination to retrieving userse from Cognito
   let entitlement = 5; // Placeholder value
   const tenantId = extractField(currentUser, "custom:tenantId");
+  // const organisationName = extractField(currentUser, "custom:organisationName");
 
   const [adminCredentials, setAdminCredentials] = useState<Credentials>();
   const [users, setUsers] = useState<UserData[]>([]);
@@ -53,6 +61,8 @@ function AdminPanel(currentUser: any) {
 
   useEffect(() => {
     setAdminCredentials(extractField(currentUser, "credentials"));
+    const adminEmailDomain = extractField(currentUser, "email").split("@")[1];
+
     let usersFetched = false;
     // console.log(
     //   `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
@@ -78,9 +88,14 @@ function AdminPanel(currentUser: any) {
 
           // List users
           // To avoid performance problems, filter by email domain at back end, then tenantId in client
+          // const emailFilter = `agm`;
+          const emailFilter = new RegExp(
+            `[A-Za-z0-9.+-]+@${adminEmailDomain}$`
+          );
+          // const emailFilter = `@${adminEmailDomain}`;
           const listUsersParams = {
             UserPoolId: cfnOutputs.awsUserPoolsId,
-            // Filter: 'custom:tenantId = "CityTrax"',
+            // Filter: `"email" = "${emailFilter}$"`,
           };
           const listUsersCommand = new ListUsersCommand(listUsersParams);
           const listUsersResponse = await cognitoClient.send(listUsersCommand);
@@ -89,21 +104,7 @@ function AdminPanel(currentUser: any) {
           // );
           let retrievedUsers: UserData[] = [];
           if (listUsersResponse.Users!.length > 0) {
-            // Create array of user objects
-            retrievedUsers = listUsersResponse.Users!.map((user) => ({
-              id: user.Attributes!.find((attr) => attr.Name === "sub")!.Value!,
-              firstName: user.Attributes!.find(
-                (attr) => attr.Name === "given_name"
-              )!.Value!,
-              lastName: user.Attributes!.find(
-                (attr) => attr.Name === "family_name"
-              )!.Value!,
-              email: user.Attributes!.find((attr) => attr.Name === "email")!
-                .Value!,
-              tenantId: user.Attributes!.find(
-                (attr) => attr.Name === "custom:tenantId"
-              )!.Value!,
-            }));
+            retrievedUsers = filterUsers(listUsersResponse, tenantId);
           } else {
             retrievedUsers = [];
           }
@@ -145,16 +146,37 @@ function AdminPanel(currentUser: any) {
     // console.log(" After adding new blank user:" + JSON.stringify(userArray));
   }
 
-  function updateUserSetWithChanges(changedUser: UserData) {
-    // Updates the users state variable with the new values of the added / changed users
+  function updateUserSetWithChanges(changedUser: UserData): void {
+    /*
+      Updates the users state variable with the new values of the added / changed users
+    */
     const userArray = [...users]; // Temporary working copy of users state array for manipulation
-    // console.log(`updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`);
-    console.table(userArray);
-    const userIndex = userArray.findIndex((user) => user.id === changedUser.id);
-    // console.log("Index of changed user: " + userIndex);
-    Object.assign(userArray[userIndex], changedUser);
-    // console.log("Current user set:\n" + JSON.stringify(userArray));
-    setUsers(userArray); // Update state with changed users
+    // console.log(
+    //   `updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`
+    // );
+    // console.table(userArray);
+    try {
+      const userIndex = userArray.findIndex(
+        (user) => user.id === changedUser.id
+      );
+      // console.log("Index of changed user: " + userIndex);
+      Object.assign(userArray[userIndex], changedUser);
+      // console.log("Current user set:");
+      // console.table(userArray);
+      setUsers(userArray); // Update state with changed users
+    } catch (error) {
+      if (error instanceof TypeError) {
+        // Temporary workaround for stale closure
+        reportStatus("Refresh the page before editing newly-created users");
+        console.error(
+          "Admin Panel not refreshed before newly-created user added",
+          error
+        );
+      } else {
+        reportStatus("Error updating user");
+        console.error("Error updating user set with changes:", error);
+      }
+    }
   }
 
   function reportStatus(message: string) {
@@ -192,6 +214,7 @@ function AdminPanel(currentUser: any) {
               { Name: "given_name", Value: newUser.firstName },
               { Name: "family_name", Value: newUser.lastName },
               { Name: "custom:tenantId", Value: tenantId },
+              // { Name: "custom:organisationName", Value: organisationName},
             ],
           };
           const createUserCommand = new AdminCreateUserCommand(
@@ -208,14 +231,18 @@ function AdminPanel(currentUser: any) {
           let tempUser = usersCopy.find(
             (userCopy) => userCopy.email === newUser.email
           );
-          tempUser!.id = newUserId!.Value;
+          tempUser!.id = newUserId!.Value!;
           tempUser!.isNew = false;
         }
 
         // Prepare to re-render new (and changed?) users:
         newUsers.length = 0; // Clear newUsers array now they are committed to the identity store
 
+        // console.log("handleClickSaveChanges: usersCopy");
+        // console.table(usersCopy);
         setUsers(usersCopy); // Update state so changes are reflected on the page
+        // console.log("handleClickSaveChanges: users");
+        // console.table(users);
       } catch (error) {
         console.error("Error adding users: ", error);
       }
@@ -239,10 +266,10 @@ function AdminPanel(currentUser: any) {
           const updateUserAttributesResponse = await cognitoClient.send(
             updateUserAttributesCommand
           );
-          console.log(
-            " Output from update request: " +
-              JSON.stringify(updateUserAttributesResponse)
-          );
+          // console.log(
+          //   " Output from update request: " +
+          //     JSON.stringify(updateUserAttributesResponse)
+          // );
         }
       } catch (error) {
         console.error("Error updating users: ", error);
@@ -255,12 +282,12 @@ function AdminPanel(currentUser: any) {
     let tempUsers = rowsSelectedForDeletion; // Local shadow variable for users to be deleted
     // console.log("User passed in: " + user.id);  // Delete after debugging
     // Disable Delete User button only when NO checkboxes are ticked
-    console.log(
-      "rowsSelectedForDeletion includes " +
-        user.id +
-        "? " +
-        rowsSelectedForDeletion.has(user.id)
-    );
+    // console.log(
+    //   "rowsSelectedForDeletion includes " +
+    //     user.id +
+    //     "? " +
+    //     rowsSelectedForDeletion.has(user.id)
+    // );
     // let debugUsers = "";  // Delete after debugging
     if (rowsSelectedForDeletion.has(user.id)) {
       // console.log("  User ID IS in the list");  // Delete after debugging
@@ -269,13 +296,13 @@ function AdminPanel(currentUser: any) {
       // console.log(" Updated set of users to be deleted: " + debugUsers);  // Delete after debugging
       setRowsSelectedForDeletion(tempUsers);
     } else {
-      console.log("  User ID is NOT in the list");
+      // console.log("  User ID is NOT in the list");
       tempUsers.add(user.id); // Add user to set (not id property to user)
       // for (const u of tempUsers) { debugUsers += u + ":" };  // Delete after debugging
       // console.log(" Updated set of users to be deleted: " + debugUsers);  // Delete after debugging
       setRowsSelectedForDeletion(tempUsers);
     }
-    console.log("No. rows to be deleted: " + rowsSelectedForDeletion.size);
+    // console.log("No. rows to be deleted: " + rowsSelectedForDeletion.size);
     // console.log("Rows with Delete checkbox ticked: " + debugUsers);  // Delete after debugging
     tempUsers.size === 0
       ? setDisableDeleteButton(true)
@@ -312,10 +339,22 @@ function AdminPanel(currentUser: any) {
         // Reset set of users deleted:
         let tempUsers = rowsSelectedForDeletion;
         tempUsers.clear();
-        setRowsSelectedForDeletion(tempUsers); // After deleting, clear state variable
+        // Post-deletion clean-up:
+        setRowsSelectedForDeletion(tempUsers); // Clear state variable
+        setDisableDeleteButton(true);
         setUsers(usersCopy); // Update state with remaining users
       } catch (error) {
-        console.error("Error deleting users:", error);
+        if (error.name === "UserNotFoundException") {
+          reportStatus(
+            "Page must be refreshed before deleting newly-created users"
+          );
+          console.error(
+            "Attempt to delete newly-created user before refreshing page"
+          );
+        } else {
+          reportStatus("Error deleting user");
+          console.error("Error deleting user:", error);
+        }
       }
     }
     // console.log("Array of users to be deleted:\n" + JSON.stringify(usersToDelete));
@@ -326,11 +365,13 @@ function AdminPanel(currentUser: any) {
     // For experimentation; remove when working
   }
 
+  const headings = ["First Name", "Last Name", "Email", "Delete?"];
+
   return (
     <>
       <ContentLayout
         header={
-          <SpaceBetween size="m">
+          <SpaceBetween direction="vertical" size="m">
             <Header
               variant="h1"
               // description={t("translation_quick_text_description")}
@@ -338,59 +379,58 @@ function AdminPanel(currentUser: any) {
                 "Add, Edit, and Configure user accounts for Translate"
               }
             >
-              <SpaceBetween direction="horizontal" alignItems="end" size="xl">
-                Manage Users
-              </SpaceBetween>
+              Manage Users
             </Header>
-          </SpaceBetween>
-        }
-      >
-        <Form
-          header={
             <p>
               <b>Entitlement</b>: {entitlement} named users ({users.length}{" "}
               registered)
             </p>
-          }
-        >
-          <SpaceBetween direction="vertical" size="m">
-            <UserTable
-              users={users}
-              updateUserSetWithChanges={updateUserSetWithChanges} //Callback function to surface changes for write
-              deleteToggleChanges={deleteToggleChanges}
-              reportStatus={reportStatus}
-            ></UserTable>
-            <SpaceBetween direction="horizontal" size="l">
-              <Button variant="primary" onClick={addUser}>
-                Add New User
-              </Button>
-              <Button
-                disabled={disableDeleteButton}
-                variant="normal"
-                onClick={handleClickDeleteUser}
-              >
-                Delete User
-              </Button>
-              <Button
-                onClick={handleCancelClick}
-                // disabled={userInfoChanged}
-                variant="normal"
-              >
-                Cancel
-              </Button>
-              <Box color="text-label" variant="p" textAlign="center">
-                {statusMessage}
-              </Box>
-              <Button
-                // disabled={userInfoChanged}
-                variant="normal"
-                onClick={handleClickSaveChanges}
-              >
-                Save Changes
-              </Button>
-            </SpaceBetween>
           </SpaceBetween>
-        </Form>
+        }
+      >
+        <Container>
+          <Form>
+            <SpaceBetween direction="vertical" size="m">
+              <UserTable
+                headings={headings}
+                minCellWidth={100}
+                users={users}
+                updateUserSetWithChanges={updateUserSetWithChanges} //Callback function to surface changes for write
+                deleteToggleChanges={deleteToggleChanges}
+                reportStatus={reportStatus}
+              ></UserTable>
+              <SpaceBetween direction="horizontal" size="l">
+                <Button variant="primary" onClick={addUser}>
+                  Add New User
+                </Button>
+                <Button
+                  disabled={disableDeleteButton}
+                  variant="normal"
+                  onClick={handleClickDeleteUser}
+                >
+                  Delete User
+                </Button>
+                <Button
+                  onClick={handleCancelClick}
+                  // disabled={userInfoChanged}
+                  variant="normal"
+                >
+                  Cancel
+                </Button>
+                <Box color="text-label" variant="p" textAlign="center">
+                  {statusMessage}
+                </Box>
+                <Button
+                  // disabled={userInfoChanged}
+                  variant="normal"
+                  onClick={handleClickSaveChanges}
+                >
+                  Save Changes
+                </Button>
+              </SpaceBetween>
+            </SpaceBetween>
+          </Form>
+        </Container>
       </ContentLayout>
     </>
   );

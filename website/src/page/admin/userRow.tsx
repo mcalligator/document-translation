@@ -1,6 +1,15 @@
-import React, { useEffect, useState } from "react";
+import "./adminStyles.css";
+import "@cloudscape-design/global-styles/index.css";
+
+import React, { ChangeEvent, useEffect, useState } from "react";
 
 import { Checkbox } from "@cloudscape-design/components";
+import {
+  borderRadiusInput,
+  colorBackgroundInputDefault,
+  colorTextBodyDefault,
+  spaceFieldHorizontal,
+} from "@cloudscape-design/design-tokens";
 
 import { UserData } from "../../util/typeExtensions";
 
@@ -19,8 +28,9 @@ export default function UserRow({
 }: UserRowProps) {
   const [userDetails, setUserDetails] = useState<UserData>(user);
   const [deleteChecked, setDeleteChecked] = useState(false); // Local state for Delete User tickbox
+  const [fieldValidity, setFieldValidity] = useState(true);
   // console.log("deleteChecked rendered with box ticked " + deleteChecked);
-  console.log("Displaying details for user " + JSON.stringify(userDetails));
+  // console.log("Displaying details for user " + JSON.stringify(userDetails));
 
   useEffect(() => {
     // Required to make userRow component re-render when ancestor components do
@@ -28,11 +38,17 @@ export default function UserRow({
     setDeleteChecked(false);
   }, [user]);
 
-  function handleChange(e) {
-    console.log(
-      "handleChange - value before change: " + JSON.stringify(userDetails)
-    );
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    /*
+    Updates field content with text typed, and resizes it appropriately
+    */
+    // console.log(
+    //   "handleChange - value before change: " + JSON.stringify(userDetails)
+    // );
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
+    // let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
+    e.target.style.width = "30px";
+    e.target.style.width = `${e.target.scrollWidth}px`;
     const fieldName: string = e.target.name;
     if (!userCopy.isNew) {
       if (!userCopy.isChanged) {
@@ -48,8 +64,13 @@ export default function UserRow({
         }
       }
     }
+    // console.log(
+    //   " handleChange - previous value of user: " + JSON.stringify(userCopy)
+    // );
     userCopy[fieldName] = e.target.value;
-    // console.log(" handleChange - Updated value of user: " + JSON.stringify(userCopy));
+    // console.log(
+    //   " handleChange - Updated value of user: " + JSON.stringify(userCopy)
+    // );
     setUserDetails(userCopy);
   }
 
@@ -57,21 +78,33 @@ export default function UserRow({
     // console.log("handleBlur - user: " + JSON.stringify(userDetails));
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
     const fieldName = e.target.name;
-    // console.log("Leaving " + fieldName + " with latest user details: " + JSON.stringify(userDetails[fieldName]));
+    // console.log(
+    //   "Leaving " +
+    //     fieldName +
+    //     " with latest user details: " +
+    //     JSON.stringify(userDetails[fieldName])
+    // );
     reportStatus(""); // Clear any existing status message
     const result = validateChanges(fieldName, e.target.value);
     if (result === true) {
       userCopy.isValid = true;
-      // console.log("handleBlur - value of " + fieldName + " for following user is valid: " + JSON.stringify(userCopy));
+      setFieldValidity(true);
+      // console.log(
+      //   "handleBlur - value of " +
+      //     fieldName +
+      //     " for following user is valid: " +
+      //     JSON.stringify(userCopy)
+      // );
       setUserDetails(userCopy); // Is this still necessary in the light of updateUserSetWithChanges?
-      // console.log(" handleBlur - updated users: " + JSON.stringify(userDetails));
+      // console.log(" handleBlur - updated user: " + JSON.stringify(userDetails));
       updateUserSetWithChanges(userCopy);
       // To do: Change field's background colour to light orange indicating it needs to be saved
     } else {
       reportStatus(result); // Notify user of invalid entry
+      setFieldValidity(false);
       // To do: Change field's background colour to light red indicating it is invalid
-      e.target.focus();
-      e.target.select();
+      // e.target.focus();
+      // e.target.select();
     }
   }
 
@@ -106,6 +139,7 @@ export default function UserRow({
           name="firstName"
           type="text"
           required={true}
+          className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.firstName}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -116,6 +150,7 @@ export default function UserRow({
           name="lastName"
           type="text"
           required={true}
+          className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.lastName}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -126,6 +161,8 @@ export default function UserRow({
           name="email"
           type="email"
           required={true}
+          className={fieldValidity ? "input.valid" : "input.error"}
+          placeholder="user@domain"
           maxLength={64}
           pattern="[a-zA-Z0-9.]@(\S)+\.\D"
           value={userDetails.email}
@@ -133,7 +170,7 @@ export default function UserRow({
           onBlur={handleBlur}
         />
       </td>
-      <td>
+      <td className="centred">
         <Checkbox
           checked={deleteChecked}
           onChange={handleDeleteToggle}
