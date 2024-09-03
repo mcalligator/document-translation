@@ -68,21 +68,35 @@ export class dt_api extends Construct {
 			email: {
 				required: true,
 				mutable: true,
-			}
+			},
+			phoneNumber: {
+				required: true,
+				mutable: true,
+			},
+			website: {
+				// Temporarily repurposed for Tenant ID to enable server-side filtering
+				required: true,
+				mutable: true,
+			},
 		};
-		let customAttributes: undefined | Record<string, cognito.ICustomAttribute> = undefined;
+		let customAttributes: undefined | Record<string, cognito.ICustomAttribute> =
+			undefined;
 		customAttributes = {
 			tenantId: new cognito.StringAttribute({
-				 mutable: true }),
+				mutable: true,
+			}),
+			organisationName: new cognito.StringAttribute({
+				mutable: true,
+			}),
 		};
 		let userInvitation: undefined | object = undefined;
 		userInvitation = {
-			emailSubject: 'Invitation to use City Trax Translate',
-			emailBody: `This message has been sent to {username}.\n\n
-				Your administrator has invited you to use City Trax Translate.  The link to access it has been sent to you separately.\n\n
-				Your temporary password is {####}.\n\n
-				Kind regards,
-				City Trax`
+			emailSubject: "Invitation to use City Trax Translate",
+			emailBody: `<p>This message has been sent to {username}.</p>
+				<p>Your administrator has invited you to use City Trax Translate.  The link to access it has been sent to you separately.</p>
+				<p>Your temporary password is {####}.</p>
+				<p>Kind regards,</p>
+				<p>City Trax</p>`,
 		};
 		let mfa: undefined | cognito.Mfa = undefined;
 		switch (props.cognitoLocalUsersMfa) {
@@ -121,7 +135,7 @@ export class dt_api extends Construct {
 			signInAliases: {
 				username: false,
 				email: true,
-				phone: false
+				phone: false,
 			},
 			standardAttributes,
 			customAttributes,
@@ -138,16 +152,56 @@ export class dt_api extends Construct {
 				challengeRequiredOnNewDevice: true,
 				deviceOnlyRememberedOnUserPrompt: true,
 			},
-			
 		});
-		// Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template
-		// Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes; 
-		//	 temporary password validity duration; remember user device (optional);
+		// Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template; remember user device (optional);
+		// Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes;
+		//	 temporary password validity duration;
 		// Verification email not required in addition to invitation email for admin-created user accounts - but how is account verified?
-		// To do: 
+		// To do:
 		// 		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
-		// 		2. Establish which property determines that users must verify an updated email address. 
-		// 		3. Try out certificate for custom Cognito domain
+		// 		2. Establish which property determines that users must verify an updated email address.
+
+		// IAM Role for Cognito Admin
+		const assumeRoleConditions: cdk.aws_iam.Conditions = {
+			StringEquals: {
+				"cognito-identity.amazonaws.com:aud": this.userPool.userPoolId,
+			},
+			"ForAnyValue:StringLike": {
+				"cognito-identity.amazonaws.com:amr": "authenticated",
+			},
+		};
+
+		const tenantAdminRole = new iam.Role(this, "tenantAdminRole", {
+			assumedBy: new iam.FederatedPrincipal(
+				"cognito-identity.amazonaws.com",
+				assumeRoleConditions,
+				"sts:AssumeRoleWithWebIdentity",
+			),
+			description: "Tenant Administration Role",
+		});
+
+		const policyPermitTenantAdmin = new iam.Policy(this, "MyPolicy", {
+			policyName: "Tenant-Admin-Permissions",
+			statements: [
+				new iam.PolicyStatement({
+					effect: iam.Effect.ALLOW,
+					actions: [
+						"cognito-idp:ListUsers",
+						"cognito-idp:AdminCreateUser",
+						"cognito-idp:AdminAddUserToGroup",
+						"cognito-idp:AdminRemoveUserFromGroup",
+						"cognito-idp:AdminUpdateUserAttributes",
+						"cognito-idp:AdminDisableUser",
+						"cognito-idp:AdminEnableUser",
+						"cognito-idp:AdminDeleteUser",
+					],
+					resources: [this.userPool.userPoolArn],
+				}),
+			],
+		});
+
+		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+
 		if (!props.cognitoLocalUsers) {
 			NagSuppressions.addResourceSuppressions(
 				this.userPool,
@@ -242,12 +296,12 @@ export class dt_api extends Construct {
 					[
 						{
 							id: "AwsSolutions-COG3",
-							reason: "Advanced Security only necessary for production environment",
-						}
+							reason:
+								"Advanced Security only necessary for production environment",
+						},
 					],
 					true,
 				);
-
 			}
 		}
 		// COGNITO | USERPOOL | CLIENT
