@@ -16,9 +16,7 @@ import {
   SpaceBetween,
 } from "@cloudscape-design/components";
 
-import { AuthSession } from "@aws-amplify/auth";
-
-import { Credentials, Id, UserData } from "../../util/typeExtensions";
+import { Credentials, UserData } from "../../util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
 import filterUsers from "./filterUsers";
@@ -26,25 +24,33 @@ import UserTable from "./userTable";
 
 import {
   AdminCreateUserCommand,
+  AdminCreateUserCommandInput,
   AdminDeleteUserCommand,
   AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
   ListUsersCommand,
+  UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
-function AdminPanel(currentUser: any) {
-  // To do:
-  //  1. Check for expired AWS Session Token and refresh.
-  //  2. Retrieve Marketplace entitlement from relevant API when solution integrated.
-  //  3. Create combined client-side and server-side filter for retrieved users.
-  //  4. Clear status message when condition no longer applies - DONE (I think)
-  //  5. Replace cognitoClient with shared component-level object.
-  //  6. Get user.id for newly-created user in UserRow to be from server, not stale local value
-  //  7. After deleting user, disable Delete User button - DONE
-  //  8. Enable Cancel button functionality
-  //  9. Get Input fields for new users to be same width as those above when data being entered
-  // 10. Set initial text column widths to be that of longest content
-  // 11. Add pagination to retrieving userse from Cognito
+export default function AdminPanel(currentUser: any) {
+  /* To do:
+    1. Check for expired AWS Session Token and refresh.
+    2. Retrieve Marketplace entitlement from relevant API when solution integrated.
+    3. Create combined client-side and server-side filter for retrieved users - PARTIALLY DONE.
+    4. Clear status message when condition no longer applies - DONE (I think).
+    5. Replace cognitoClient with shared component-level object.
+    6. Get user.id for newly-created user in UserRow to be from server, not stale local value.
+    7. After deleting user, disable Delete User button - DONE.
+    8. *** Enable Cancel button functionality.
+    9. Get Input fields for new users to be same width as those above when data being entered.
+   10. Set initial text column widths to be that of longest content.
+   11. *** Add pagination to retrieving userse from Cognito.
+   12. Change input fields' colour to signify invalid entry.
+   13. *** Redeploy CTT with organisationName and phoneNumber attributes in user pool; enable in front end.
+   14. Refine TenantAdmins Cognito permissions.
+   15. Check which standard OIDC attribute could be temporarily used to proxy Tenant ID.
+  */
+
   let entitlement = 5; // Placeholder value
   const tenantId = extractField(currentUser, "custom:tenantId");
   // const organisationName = extractField(currentUser, "custom:organisationName");
@@ -71,7 +77,7 @@ function AdminPanel(currentUser: any) {
     const fetchUsers = async () => {
       // Retrieve users from Cognito user pool
       if (adminCredentials && !usersFetched) {
-        // Only attempt this if credentials have been defined and users have not already been fetched
+        // Only attempt if credentials defined & users not already fetched
         try {
           // console.log(
           //   `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
@@ -87,15 +93,9 @@ function AdminPanel(currentUser: any) {
           });
 
           // List users
-          // To avoid performance problems, filter by email domain at back end, then tenantId in client
-          // const emailFilter = `agm`;
-          const emailFilter = new RegExp(
-            `[A-Za-z0-9.+-]+@${adminEmailDomain}$`
-          );
-          // const emailFilter = `@${adminEmailDomain}`;
           const listUsersParams = {
             UserPoolId: cfnOutputs.awsUserPoolsId,
-            // Filter: `"email" = "${emailFilter}$"`,
+            Limit: 20,
           };
           const listUsersCommand = new ListUsersCommand(listUsersParams);
           const listUsersResponse = await cognitoClient.send(listUsersCommand);
@@ -122,7 +122,7 @@ function AdminPanel(currentUser: any) {
     // console.log(`adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`);
   }, [adminCredentials]);
 
-  function addUser(e) {
+  function addUser() {
     if (users.length >= entitlement) {
       reportStatus(
         "No remaining entitlement - purchase additional subscription"
@@ -183,8 +183,9 @@ function AdminPanel(currentUser: any) {
     setStatusMessage(message);
   }
 
-  async function handleClickSaveChanges(e) {
+  async function handleClickSaveChanges(e: Event) {
     // Write both new and changed users to back end
+    e.preventDefault();
     const changedUsers = users.filter((user) => user.isChanged);
     const newUsers = users.filter((user) => user.isNew); // Separate array for new users to replace local temporary IDs after write
     let usersCopy = [...users]; // Local variable to shadow state users array
@@ -203,18 +204,20 @@ function AdminPanel(currentUser: any) {
     if (newUsers.length > 0) {
       try {
         for (const newUser of newUsers) {
-          const createUserParams = {
+          const createUserParams: AdminCreateUserCommandInput = {
             UserPoolId: cfnOutputs.awsUserPoolsId,
             DesiredDeliveryMediums: ["EMAIL"],
             Username: newUser.email,
-            email_verified: true,
             ForceAliasCreation: true,
             UserAttributes: [
               { Name: "email", Value: newUser.email },
+              { Name: "email_verified", Value: "true" },
               { Name: "given_name", Value: newUser.firstName },
               { Name: "family_name", Value: newUser.lastName },
-              { Name: "custom:tenantId", Value: tenantId },
+              // { Name: "phone_number", Value: newUser.phoneNumber },
+              { Name: "custom:tenantId", Value: tenantId }, // Replace with customer_id
               // { Name: "custom:organisationName", Value: organisationName},
+              // { Name: "website", Value: tenantId }, // Temporarily repurposed to enable server-side filtering
             ],
           };
           const createUserCommand = new AdminCreateUserCommand(
@@ -309,7 +312,7 @@ function AdminPanel(currentUser: any) {
       : setDisableDeleteButton(false);
   }
 
-  async function handleClickDeleteUser(e) {
+  async function handleClickDeleteUser() {
     // console.log("Deleting users " + JSON.stringify(Array.from(rowsSelectedForDeletion)));
     const cognitoClient = new CognitoIdentityProviderClient({
       region: cfnOutputs.awsRegion,
@@ -344,7 +347,7 @@ function AdminPanel(currentUser: any) {
         setDisableDeleteButton(true);
         setUsers(usersCopy); // Update state with remaining users
       } catch (error) {
-        if (error.name === "UserNotFoundException") {
+        if (error instanceof UserNotFoundException) {
           reportStatus(
             "Page must be refreshed before deleting newly-created users"
           );
@@ -435,5 +438,3 @@ function AdminPanel(currentUser: any) {
     </>
   );
 }
-
-export default AdminPanel;

@@ -3,13 +3,7 @@ import "@cloudscape-design/global-styles/index.css";
 
 import React, { ChangeEvent, useEffect, useState } from "react";
 
-import { Checkbox } from "@cloudscape-design/components";
-import {
-  borderRadiusInput,
-  colorBackgroundInputDefault,
-  colorTextBodyDefault,
-  spaceFieldHorizontal,
-} from "@cloudscape-design/design-tokens";
+import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
 import { UserData } from "../../util/typeExtensions";
 
@@ -74,7 +68,7 @@ export default function UserRow({
     setUserDetails(userCopy);
   }
 
-  function handleBlur(e) {
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     // console.log("handleBlur - user: " + JSON.stringify(userDetails));
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
     const fieldName = e.target.name;
@@ -123,14 +117,14 @@ export default function UserRow({
     }
   }
 
-  function handleDeleteToggle(e) {
+  const handleDeleteToggle: CheckboxProps["onChange"] = (e) => {
     const checked = e.detail.checked;
     // console.log("Toggle button clicked; value now " + checked);
     setDeleteChecked(checked);
     // console.log("deleteChecked set to " + deleteChecked);
     // Enable or disable the Delete User button when checkbox at end of row clicked
     deleteToggleChanges(userDetails);
-  }
+  };
 
   return (
     <>
