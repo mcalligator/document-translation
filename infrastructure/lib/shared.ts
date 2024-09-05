@@ -10,9 +10,10 @@ export interface SharedConfiguration {
 	pipelineRemovalPolicy: string;
 	readable: boolean;
 	readableBedrockRegion: string;
+	sourceGitService: string;
 	sourceGitBranch: string;
 	sourceGitRepo: string;
-	sourceGitService: string;
+	sourceConnectionArn: string;
 	translation: boolean;
 	translationLifecycleDefault: number;
 	translationLifecyclePii: number;
@@ -65,6 +66,7 @@ export function getSharedConfiguration(): SharedConfiguration {
 
 	// Source
 	const sourceGitService = process.env.sourceGitService?.toLowerCase() || "";
+	const sourceConnectionArn = process.env.sourceConnectionArn || "";
 	const sourceGitRepo = process.env.sourceGitRepo || "";
 	if (!sourceGitRepo) {
 		throw new Error("sourceGitRepo is required");
@@ -88,9 +90,10 @@ export function getSharedConfiguration(): SharedConfiguration {
 		pipelineRemovalPolicy,
 		readable,
 		readableBedrockRegion,
+		sourceGitService,
 		sourceGitBranch,
 		sourceGitRepo,
-		sourceGitService,
+		sourceConnectionArn,
 		translation,
 		translationLifecycleDefault,
 		translationLifecyclePii,

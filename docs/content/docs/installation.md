@@ -58,6 +58,10 @@ All fields in this section are required for all features you decide to enable.
 	<label for="sourceGitRepoOwner">Repo Owner</label>
 	<input class="requiredForGitHub" type="text" name="sourceGitRepoOwner" placeholder="username">
 </div>
+<div class="isForGitHub isNotForCodeCommit" style="display: none;">
+	<label for="sourceConnectionArn">CodePipeline Connection</label>
+	<input class="requiredForGitHub" type="text" name="sourceConnectionArn" placeholder="arn:aws:codestar-connections:{region}:{account-id}:connection/{connection-id}">
+</div>
 <div>
 	<label for="sourceGitRepo">Repo Name</label>
 	<input type="text" name="sourceGitRepo" placeholder="document-translation" value="document-translation" required>

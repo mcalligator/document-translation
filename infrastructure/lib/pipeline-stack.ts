@@ -38,6 +38,7 @@ export class pipelineStack extends cdk.Stack {
 			sourceGitService,
 			sourceGitRepo,
 			sourceGitBranch,
+			sourceConnectionArn,
 			appRemovalPolicy,
 			pipelineRemovalPolicy,
 		} = getSharedConfiguration();
@@ -95,10 +96,20 @@ export class pipelineStack extends cdk.Stack {
 		// SOURCE
 		let pipelineSource: pipelines.CodePipelineSource;
 		if (sourceGitService == "github") {
-			pipelineSource = pipelines.CodePipelineSource.gitHub(
-				sourceGitRepo,
-				sourceGitBranch,
-			);
+			if (sourceConnectionArn) {
+				pipelineSource = pipelines.CodePipelineSource.connection(
+					sourceGitRepo,
+					sourceGitBranch,
+					{
+						connectionArn: sourceConnectionArn,
+					},
+				);
+			} else {
+				pipelineSource = pipelines.CodePipelineSource.gitHub(
+					sourceGitRepo,
+					sourceGitBranch,
+				);
+			}
 		} else {
 			const codeCommitRepo = codecommit.Repository.fromRepositoryName(
 				this,
@@ -236,14 +247,14 @@ export class pipelineStack extends cdk.Stack {
 						"aws appsync get-introspection-schema --api-id=${awsAppsyncId} --format SDL ${GRAPHQLSCHEMAFILE}",
 						"cd ${WEBDIR_GRAPHQL}",
 						"~/.amplify/bin/amplify codegen",
-						"touch subscriptions.ts",	// Temporary workaround for bug in deployment
+						"touch subscriptions.ts", // Temporary workaround for bug in deployment
 						// BUILD REACT
 						// BUILD REACT | FEATURES
 						"cd ${WEBDIR_SRC}",
 						"touch ${FEATURESFILE}",
 						'echo "{}" > ${FEATURESFILE}',
-						'jq -r ".translation = \"${translation}\"" ${FEATURESFILE} > ${FEATURESFILE}.tmp && mv ${FEATURESFILE}.tmp ${FEATURESFILE}',
-						'jq -r ".readable    = \"${readable}\""    ${FEATURESFILE} > ${FEATURESFILE}.tmp && mv ${FEATURESFILE}.tmp ${FEATURESFILE}',
+						'jq -r ".translation = "${translation}"" ${FEATURESFILE} > ${FEATURESFILE}.tmp && mv ${FEATURESFILE}.tmp ${FEATURESFILE}',
+						'jq -r ".readable    = "${readable}""    ${FEATURESFILE} > ${FEATURESFILE}.tmp && mv ${FEATURESFILE}.tmp ${FEATURESFILE}',
 						'echo "Features enabled: $(cat ${FEATURESFILE})"',
 						// BUILD REACT | BUILD
 						"cd ${WEBDIR}",

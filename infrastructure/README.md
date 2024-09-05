@@ -21,6 +21,7 @@ export translationLifecyclePii="3"
 export sourceGitService="code-commit"
 export sourceGitRepo="document-translation"
 export sourceGitBranch="dev"
+export sourceConnectionArn=""
 
 export cognitoLocalUsers="true"
 export cognitoLocalUsersMfa="off"
