@@ -156,6 +156,7 @@ export class pipelineStack extends cdk.Stack {
 						sourceGitService: { value: sourceGitService },
 						sourceGitRepo: { value: sourceGitRepo },
 						sourceGitBranch: { value: sourceGitBranch },
+						sourceConnectionArn: { value: sourceConnectionArn },
 						pipelineRemovalPolicy: { value: pipelineRemovalPolicy },
 						appRemovalPolicy: { value: appRemovalPolicy },
 						webUi: { value: webUi },
