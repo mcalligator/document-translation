@@ -96,7 +96,9 @@ export class pipelineStack extends cdk.Stack {
 		// SOURCE
 		let pipelineSource: pipelines.CodePipelineSource;
 		if (sourceGitService == "github") {
+			console.log("sourceGitService: GitHub");
 			if (sourceConnectionArn) {
+				console.log("sourceConnectionArn: " + sourceConnectionArn);
 				pipelineSource = pipelines.CodePipelineSource.connection(
 					sourceGitRepo,
 					sourceGitBranch,
@@ -105,6 +107,7 @@ export class pipelineStack extends cdk.Stack {
 					},
 				);
 			} else {
+				console.log("Falling back to GitHub token to authenticate");
 				pipelineSource = pipelines.CodePipelineSource.gitHub(
 					sourceGitRepo,
 					sourceGitBranch,
