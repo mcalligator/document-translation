@@ -146,7 +146,7 @@ export class pipelineStack extends cdk.Stack {
 					`cd ${dirPipeline}`,
 					"npm ci",
 					"printenv",
-					"cdk synth",
+					"cdk synth --verbose --debug",
 				],
 			}),
 			codeBuildDefaults: {
