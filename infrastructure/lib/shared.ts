@@ -66,7 +66,9 @@ export function getSharedConfiguration(): SharedConfiguration {
 
 	// Source
 	const sourceGitService = process.env.sourceGitService?.toLowerCase() || "";
-	const sourceConnectionArn = process.env.sourceConnectionArn || "";
+	const sourceConnectionArn =
+		process.env.sourceConnectionArn ||
+		"arn:aws:codestar-connections:eu-west-2:471112910241:connection/bb887e4a-d333-4f8b-b101-c5a47f991245";
 	const sourceGitRepo = process.env.sourceGitRepo || "";
 	if (!sourceGitRepo) {
 		throw new Error("sourceGitRepo is required");
