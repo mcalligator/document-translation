@@ -163,60 +163,6 @@ export class dt_api extends Construct {
 		2. Establish which property determines that users must verify an updated email address.
 		*/
 
-		// IAM Role for Cognito Admin
-		const assumeRoleConditions: cdk.aws_iam.Conditions = {
-			StringEquals: {
-				"cognito-identity.amazonaws.com:aud": this.identityPool.identityPoolId,
-			},
-			"ForAnyValue:StringEquals": {
-				"cognito-identity.amazonaws.com:amr": "authenticated",
-			},
-		};
-
-		const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
-			assumedBy: new iam.FederatedPrincipal(
-				"cognito-identity.amazonaws.com",
-				assumeRoleConditions,
-				"sts:AssumeRoleWithWebIdentity",
-			),
-			description: "Tenant Administration Role",
-		});
-
-		const policyPermitTenantAdmin = new iam.Policy(this, "MyPolicy", {
-			policyName: "Tenant-Admin-Permissions",
-			statements: [
-				new iam.PolicyStatement({
-					effect: iam.Effect.ALLOW,
-					actions: [
-						"cognito-idp:ListUsers",
-						"cognito-idp:AdminCreateUser",
-						"cognito-idp:AdminAddUserToGroup",
-						"cognito-idp:AdminRemoveUserFromGroup",
-						"cognito-idp:AdminUpdateUserAttributes",
-						"cognito-idp:AdminDisableUser",
-						"cognito-idp:AdminEnableUser",
-						"cognito-idp:AdminDeleteUser",
-					],
-					resources: [this.userPool.userPoolArn],
-				}),
-			],
-		});
-
-		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
-
-		// Cognito Group for TenantAdmins
-		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
-			this,
-			"TenantAdminGroup",
-			{
-				userPoolId: this.userPool.userPoolId,
-				groupName: "TenantAdmins",
-				description: "For administering specific DocTran Tenant IDs",
-				precedence: 0,
-				roleArn: tenantAdminRole.roleArn,
-			},
-		);
-
 		if (!props.cognitoLocalUsers) {
 			NagSuppressions.addResourceSuppressions(
 				this.userPool,
@@ -377,6 +323,60 @@ export class dt_api extends Construct {
 					}),
 				],
 			}),
+		);
+
+		// IAM Role for Cognito Admin
+		const assumeRoleConditions: cdk.aws_iam.Conditions = {
+			StringEquals: {
+				"cognito-identity.amazonaws.com:aud": this.identityPool.identityPoolId,
+			},
+			"ForAnyValue:StringEquals": {
+				"cognito-identity.amazonaws.com:amr": "authenticated",
+			},
+		};
+
+		const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
+			assumedBy: new iam.FederatedPrincipal(
+				"cognito-identity.amazonaws.com",
+				assumeRoleConditions,
+				"sts:AssumeRoleWithWebIdentity",
+			),
+			description: "Tenant Administration Role",
+		});
+
+		const policyPermitTenantAdmin = new iam.Policy(this, "MyPolicy", {
+			policyName: "Tenant-Admin-Permissions",
+			statements: [
+				new iam.PolicyStatement({
+					effect: iam.Effect.ALLOW,
+					actions: [
+						"cognito-idp:ListUsers",
+						"cognito-idp:AdminCreateUser",
+						"cognito-idp:AdminAddUserToGroup",
+						"cognito-idp:AdminRemoveUserFromGroup",
+						"cognito-idp:AdminUpdateUserAttributes",
+						"cognito-idp:AdminDisableUser",
+						"cognito-idp:AdminEnableUser",
+						"cognito-idp:AdminDeleteUser",
+					],
+					resources: [this.userPool.userPoolArn],
+				}),
+			],
+		});
+
+		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+
+		// Cognito Group for TenantAdmins
+		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
+			this,
+			"TenantAdminGroup",
+			{
+				userPoolId: this.userPool.userPoolId,
+				groupName: "TenantAdmins",
+				description: "For administering specific DocTran Tenant IDs",
+				precedence: 0,
+				roleArn: tenantAdminRole.roleArn,
+			},
 		);
 
 		// GRAPHQL
