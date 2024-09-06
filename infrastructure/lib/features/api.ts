@@ -153,25 +153,27 @@ export class dt_api extends Construct {
 				deviceOnlyRememberedOnUserPrompt: true,
 			},
 		});
-		// Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template; remember user device (optional);
-		// Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes;
-		//	 temporary password validity duration;
-		// Verification email not required in addition to invitation email for admin-created user accounts - but how is account verified?
-		// To do:
-		// 		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
-		// 		2. Establish which property determines that users must verify an updated email address.
+
+		/*
+		Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template; remember user device (optional);
+		Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes; temporary password validity duration;
+		Verification email not required in addition to invitation email for admin-created user accounts - but how is account verified?
+		To do:
+		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
+		2. Establish which property determines that users must verify an updated email address.
+		*/
 
 		// IAM Role for Cognito Admin
 		const assumeRoleConditions: cdk.aws_iam.Conditions = {
 			StringEquals: {
-				"cognito-identity.amazonaws.com:aud": this.userPool.userPoolId,
+				"cognito-identity.amazonaws.com:aud": this.identityPool.identityPoolId,
 			},
-			"ForAnyValue:StringLike": {
+			"ForAnyValue:StringEquals": {
 				"cognito-identity.amazonaws.com:amr": "authenticated",
 			},
 		};
 
-		const tenantAdminRole = new iam.Role(this, "tenantAdminRole", {
+		const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
 			assumedBy: new iam.FederatedPrincipal(
 				"cognito-identity.amazonaws.com",
 				assumeRoleConditions,
@@ -201,6 +203,19 @@ export class dt_api extends Construct {
 		});
 
 		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+
+		// Cognito Group for TenantAdmins
+		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
+			this,
+			"TenantAdminGroup",
+			{
+				userPoolId: this.userPool.userPoolId,
+				groupName: "TenantAdmins",
+				description: "For administering specific DocTran Tenant IDs",
+				precedence: 0,
+				roleArn: tenantAdminRole.roleArn,
+			},
+		);
 
 		if (!props.cognitoLocalUsers) {
 			NagSuppressions.addResourceSuppressions(
@@ -335,7 +350,7 @@ export class dt_api extends Construct {
 		userPoolHostedUICustomisation.node.addDependency(this.userPoolDomain);
 
 		// COGNITO | IDENTITYPOOL
-		this.identityPool = new identitypool.IdentityPool(this, "identityPool", {
+		this.identityPool = new identitypool.IdentityPool(this, "IdentityPool", {
 			// ASM-COG5
 			allowUnauthenticatedIdentities: false,
 			authenticationProviders: {
@@ -351,7 +366,7 @@ export class dt_api extends Construct {
 		// COGNITO | USER ROLES
 		// COGNITO | USER ROLES | UNAUTHENTICATED
 		this.identityPool.unauthenticatedRole.attachInlinePolicy(
-			new iam.Policy(this, "unauthorisedExplicitDenyAll", {
+			new iam.Policy(this, "UnauthorisedExplicitDenyAll", {
 				policyName: "EXPLICIT-DENY-ALL",
 				statements: [
 					new iam.PolicyStatement({
