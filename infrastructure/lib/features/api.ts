@@ -346,7 +346,7 @@ export class dt_api extends Construct {
 					reason: "Scoped to Cognito-specific group. Allow wildcard.",
 					appliesTo: [
 						"Action::aws-marketplace:GetEntitlements",
-						"arn:aws:aws-marketplace::<AWS::AccountId>:*",
+						"arn:aws:aws-marketplace:::*",
 					],
 				},
 			],
