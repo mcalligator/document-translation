@@ -1,0 +1,49 @@
+import entitlementCodes from "./entitlementsCodes.json";
+
+import {
+  GetEntitlementsCommand,
+  MarketplaceEntitlementServiceClient,
+} from "@aws-sdk/client-marketplace-entitlement-service";
+
+export interface Entitlement {
+  isExpired: boolean;
+  userCount: number;
+}
+
+const getEntitlement = async function (tenantId: string): Promise<Entitlement> {
+  const entitlementClient = new MarketplaceEntitlementServiceClient({
+    region: "us-east-1",
+  });
+  const entitlementParams = {
+    ProductCode: "c9z0oe0qbge757tw4e5ey0fc0",
+    CustomerIdentifier: tenantId,
+  };
+  try {
+    const entitlementCommand = new GetEntitlementsCommand(entitlementParams);
+    const entitlementResponse =
+      await entitlementClient.send(entitlementCommand);
+
+    const isExpired =
+      entitlementResponse.hasOwnProperty("Entitlements") === false ||
+      entitlementResponse.Entitlements!.length === 0 ||
+      new Date(entitlementResponse.Entitlements![0].ExpirationDate!) <
+        new Date();
+
+    const entitlementCode = entitlementResponse.Entitlements![0].Dimension;
+    const entitlement = entitlementCodes.find(
+      ({ entitlementId }) => entitlementId === entitlementCode
+    );
+    return {
+      isExpired: isExpired,
+      userCount: entitlement?.userCount!,
+    };
+  } catch (error) {
+    console.error(`Unable to determine entitlement: ${error}`);
+    return {
+      isExpired: true,
+      userCount: 0,
+    };
+  }
+};
+
+export { getEntitlement };

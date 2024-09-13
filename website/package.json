@@ -9,6 +9,7 @@
 		"@aws-amplify/storage": "^6.4.0",
 		"@aws-amplify/ui-react": "^6.1.14",
 		"@aws-sdk/client-cognito-identity-provider": "^3.625.0",
+		"@aws-sdk/client-marketplace-entitlement-service": "^3.645.0",
 		"@cloudscape-design/components": "^3.0.622",
 		"@cloudscape-design/design-tokens": "^3.0.43",
 		"@cloudscape-design/global-styles": "^1.0.27",

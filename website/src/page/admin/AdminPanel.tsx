@@ -16,6 +16,7 @@ import {
   SpaceBetween,
 } from "@cloudscape-design/components";
 
+import { Entitlement, getEntitlement } from "../../util/adminUtils";
 import { Credentials, UserData } from "../../util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
@@ -35,27 +36,27 @@ import {
 export default function AdminPanel(currentUser: any) {
   /* To do:
     1. Check for expired AWS Session Token and refresh.
-    2. Retrieve Marketplace entitlement from relevant API when solution integrated.
-    3. Create combined client-side and server-side filter for retrieved users - PARTIALLY DONE.
-    4. Clear status message when condition no longer applies - DONE (I think).
+    2. Retrieve Marketplace entitlement from relevant API when solution integrated - PARTIALLY DONE.
+    3. Clear status message when condition no longer applies - DONE (I think).
     5. Replace cognitoClient with shared component-level object.
     6. Get user.id for newly-created user in UserRow to be from server, not stale local value.
     7. After deleting user, disable Delete User button - DONE.
     8. *** Enable Cancel button functionality.
     9. Get Input fields for new users to be same width as those above when data being entered.
    10. Set initial text column widths to be that of longest content.
-   11. *** Add pagination to retrieving userse from Cognito.
+   11. *** Add pagination to retrieving userse from Cognito - fast-follow.
    12. Change input fields' colour to signify invalid entry.
-   13. *** Redeploy CTT with organisationName and phoneNumber attributes in user pool; enable in front end.
-   14. Refine TenantAdmins Cognito permissions.
-   15. Check which standard OIDC attribute could be temporarily used to proxy Tenant ID.
+   13. *** Redeploy CTT with organisationName and phoneNumber attributes in user pool; enable in front end - DONE.
+   14. Refine TenantAdmins Cognito permissions, adding SNS Publish - DONE.
   */
 
-  let entitlement = 5; // Placeholder value
+  // let entitlement = 5; // Placeholder value
   const tenantId = extractField(currentUser, "custom:tenantId");
-  // const organisationName = extractField(currentUser, "custom:organisationName");
+  // const subscriptionStatus = getEntitlement(tenantId);
+  const organisationName = extractField(currentUser, "custom:organisationName");
 
   const [adminCredentials, setAdminCredentials] = useState<Credentials>();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<Entitlement>();
   const [users, setUsers] = useState<UserData[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [rowsSelectedForDeletion, setRowsSelectedForDeletion] = useState(
@@ -66,8 +67,22 @@ export default function AdminPanel(currentUser: any) {
   // console.log(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
 
   useEffect(() => {
+    // Retrieve subscription status
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const subscriptionStatus = await getEntitlement(tenantId);
+        setSubscriptionStatus(subscriptionStatus);
+      } catch (error) {
+        console.error("Error fetching subscription status:", error);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, []);
+
+  useEffect(() => {
     setAdminCredentials(extractField(currentUser, "credentials"));
-    const adminEmailDomain = extractField(currentUser, "email").split("@")[1];
+    // const adminEmailDomain = extractField(currentUser, "email").split("@")[1]; // No longer required
 
     let usersFetched = false;
     // console.log(
@@ -123,7 +138,7 @@ export default function AdminPanel(currentUser: any) {
   }, [adminCredentials]);
 
   function addUser() {
-    if (users.length >= entitlement) {
+    if (users.length >= subscriptionStatus!.userCount) {
       reportStatus(
         "No remaining entitlement - purchase additional subscription"
       );
@@ -385,8 +400,8 @@ export default function AdminPanel(currentUser: any) {
               Manage Users
             </Header>
             <p>
-              <b>Entitlement</b>: {entitlement} named users ({users.length}{" "}
-              registered)
+              <b>Entitlement</b>: {subscriptionStatus?.userCount} named users (
+              {users.length} registered)
             </p>
           </SpaceBetween>
         }

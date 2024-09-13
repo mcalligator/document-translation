@@ -1,0 +1,14 @@
+    [
+        {
+            "entitlementId": "T1",
+            "userCount": 5
+        },
+        {
+            "entitlementId": "T2",
+            "userCount": 8
+        },
+        {
+            "entitlementId": "T3",
+            "userCount": 10
+        }
+    ]

@@ -73,11 +73,6 @@ export class dt_api extends Construct {
 				required: true,
 				mutable: true,
 			},
-			website: {
-				// Temporarily repurposed for Tenant ID to enable server-side filtering
-				required: true,
-				mutable: true,
-			},
 		};
 		let customAttributes: undefined | Record<string, cognito.ICustomAttribute> =
 			undefined;
@@ -360,6 +355,11 @@ export class dt_api extends Construct {
 						"cognito-idp:AdminDeleteUser",
 					],
 					resources: [this.userPool.userPoolArn],
+				}),
+				new iam.PolicyStatement({
+					effect: iam.Effect.ALLOW,
+					actions: ["aws-marketplace:GetEntitlements"],
+					resources: ["*"],
 				}),
 			],
 		});
