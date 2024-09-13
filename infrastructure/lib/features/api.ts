@@ -301,6 +301,7 @@ export class dt_api extends Construct {
 				policyName: "Tenant-Admin-Permissions",
 				statements: [
 					new iam.PolicyStatement({
+						// ASM-IAM
 						effect: iam.Effect.ALLOW,
 						actions: [
 							"cognito-idp:ListUsers",
@@ -314,7 +315,18 @@ export class dt_api extends Construct {
 						],
 						resources: [this.userPool.userPoolArn],
 					}),
+				],
+			},
+		);
+
+		const policyPermitTenantAdminGetEntitlements = new iam.Policy(
+			this,
+			"TenantAdminPermissionsGetEntitlements",
+			{
+				policyName: "Tenant-Admin-Permissions-GetEntitlements",
+				statements: [
 					new iam.PolicyStatement({
+						// ASM-IAM
 						effect: iam.Effect.ALLOW,
 						actions: ["aws-marketplace:GetEntitlements"],
 						resources: ["*"],
@@ -324,7 +336,22 @@ export class dt_api extends Construct {
 		);
 
 		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+		policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
 
+		NagSuppressions.addResourceSuppressions(
+			policyPermitTenantAdminGetEntitlements,
+			[
+				{
+					id: "AwsSolutions-IAM5",
+					reason: "Scoped to Cognito-specific group. Allow wildcard.",
+					appliesTo: [
+						"Action::aws-marketplace:GetEntitlements",
+						"arn:aws:aws-marketplace::<AWS::AccountId>:*",
+					],
+				},
+			],
+			true,
+		);
 		// Cognito Group for TenantAdmins
 		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
 			this,
