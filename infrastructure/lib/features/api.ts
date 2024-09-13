@@ -152,52 +152,7 @@ export class dt_api extends Construct {
 		/*
 		Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template; remember user device (optional);
 		Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes; temporary password validity duration;
-		Verification email not required in addition to invitation email for admin-created user accounts - but how is account verified?
-		To do:
-		1. Decide whether to use code or link in verification email sent to newly-created users (if relevant).
-		2. Establish which property determines that users must verify an updated email address.
 		*/
-
-		if (!props.cognitoLocalUsers) {
-			NagSuppressions.addResourceSuppressions(
-				this.userPool,
-				[
-					{
-						id: "AwsSolutions-COG1",
-						reason: "Local users not enabled by admin",
-					},
-					{
-						id: "AwsSolutions-COG2",
-						reason: "Local users not enabled by admin",
-					},
-				],
-				true,
-			);
-		}
-		if (mfa == cognito.Mfa.OFF || mfa == cognito.Mfa.OPTIONAL) {
-			NagSuppressions.addResourceSuppressions(
-				this.userPool,
-				[
-					{
-						id: "AwsSolutions-COG2",
-						reason: "MFA enforcement specified by admin",
-					},
-				],
-				true,
-			);
-		}
-		if (sms) {
-			NagSuppressions.addResourceSuppressions(
-				this.userPool,
-				[
-					{
-						id: "AwsSolutions-IAM5",
-						reason: "SMS MFA SNS topic unknown at deploy time",
-					},
-				],
-				true,
-			);
-		}
 
 		// COGNITO | USERPOOL | ADVANCED SECURITY
 		const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
@@ -339,30 +294,34 @@ export class dt_api extends Construct {
 			description: "Tenant Administration Role",
 		});
 
-		const policyPermitTenantAdmin = new iam.Policy(this, "MyPolicy", {
-			policyName: "Tenant-Admin-Permissions",
-			statements: [
-				new iam.PolicyStatement({
-					effect: iam.Effect.ALLOW,
-					actions: [
-						"cognito-idp:ListUsers",
-						"cognito-idp:AdminCreateUser",
-						"cognito-idp:AdminAddUserToGroup",
-						"cognito-idp:AdminRemoveUserFromGroup",
-						"cognito-idp:AdminUpdateUserAttributes",
-						"cognito-idp:AdminDisableUser",
-						"cognito-idp:AdminEnableUser",
-						"cognito-idp:AdminDeleteUser",
-					],
-					resources: [this.userPool.userPoolArn],
-				}),
-				new iam.PolicyStatement({
-					effect: iam.Effect.ALLOW,
-					actions: ["aws-marketplace:GetEntitlements"],
-					resources: ["*"],
-				}),
-			],
-		});
+		const policyPermitTenantAdmin = new iam.Policy(
+			this,
+			"TenantAdminPermissions",
+			{
+				policyName: "Tenant-Admin-Permissions",
+				statements: [
+					new iam.PolicyStatement({
+						effect: iam.Effect.ALLOW,
+						actions: [
+							"cognito-idp:ListUsers",
+							"cognito-idp:AdminCreateUser",
+							"cognito-idp:AdminAddUserToGroup",
+							"cognito-idp:AdminRemoveUserFromGroup",
+							"cognito-idp:AdminUpdateUserAttributes",
+							"cognito-idp:AdminDisableUser",
+							"cognito-idp:AdminEnableUser",
+							"cognito-idp:AdminDeleteUser",
+						],
+						resources: [this.userPool.userPoolArn],
+					}),
+					new iam.PolicyStatement({
+						effect: iam.Effect.ALLOW,
+						actions: ["aws-marketplace:GetEntitlements"],
+						resources: ["*"],
+					}),
+				],
+			},
+		);
 
 		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
 
@@ -378,6 +337,59 @@ export class dt_api extends Construct {
 				roleArn: tenantAdminRole.roleArn,
 			},
 		);
+
+		if (!props.cognitoLocalUsers) {
+			NagSuppressions.addResourceSuppressions(
+				this.userPool,
+				[
+					{
+						id: "AwsSolutions-COG1",
+						reason: "Local users not enabled by admin",
+					},
+					{
+						id: "AwsSolutions-COG2",
+						reason: "Local users not enabled by admin",
+					},
+				],
+				true,
+			);
+		} else {
+			NagSuppressions.addResourceSuppressions(
+				tenantAdminRole,
+				[
+					{
+						id: "AwsSolutions-IAM5",
+						reason:
+							"TenantAdminRole only assumed by admin users authenticated through Cognito",
+					},
+				],
+				true,
+			);
+		}
+		if (mfa == cognito.Mfa.OFF || mfa == cognito.Mfa.OPTIONAL) {
+			NagSuppressions.addResourceSuppressions(
+				this.userPool,
+				[
+					{
+						id: "AwsSolutions-COG2",
+						reason: "MFA enforcement specified by admin",
+					},
+				],
+				true,
+			);
+		}
+		if (sms) {
+			NagSuppressions.addResourceSuppressions(
+				this.userPool,
+				[
+					{
+						id: "AwsSolutions-IAM5",
+						reason: "SMS MFA SNS topic unknown at deploy time",
+					},
+				],
+				true,
+			);
+		}
 
 		// GRAPHQL
 		// GRAPHQL | ROLE
