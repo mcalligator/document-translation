@@ -319,39 +319,41 @@ export class dt_api extends Construct {
 			},
 		);
 
-		const policyPermitTenantAdminGetEntitlements = new iam.Policy(
-			this,
-			"TenantAdminPermissionsGetEntitlements",
-			{
-				policyName: "Tenant-Admin-Permissions-GetEntitlements",
-				statements: [
-					new iam.PolicyStatement({
-						// ASM-IAM
-						effect: iam.Effect.ALLOW,
-						actions: ["aws-marketplace:GetEntitlements"],
-						resources: ["*"],
-					}),
-				],
-			},
-		);
+		// The following policy and its attachment is disabled, since the nag suppression is not working
+		// const policyPermitTenantAdminGetEntitlements = new iam.Policy(
+		// 	this,
+		// 	"TenantAdminPermissionsGetEntitlements",
+		// 	{
+		// 		policyName: "Tenant-Admin-Permissions-GetEntitlements",
+		// 		statements: [
+		// 			new iam.PolicyStatement({
+		// 				// ASM-IAM
+		// 				effect: iam.Effect.ALLOW,
+		// 				actions: ["aws-marketplace:GetEntitlements"],
+		// 				resources: ["*"],
+		// 			}),
+		// 		],
+		// 	},
+		// );
 
 		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
-		policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
+		// policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
 
-		NagSuppressions.addResourceSuppressions(
-			policyPermitTenantAdminGetEntitlements,
-			[
-				{
-					id: "AwsSolutions-IAM5",
-					reason: "Scoped to Cognito-specific group. Allow wildcard.",
-					appliesTo: [
-						"Action::aws-marketplace:GetEntitlements",
-						"arn:aws:aws-marketplace:::*",
-					],
-				},
-			],
-			true,
-		);
+		// NagSuppressions.addResourceSuppressions(
+		// 	policyPermitTenantAdminGetEntitlements,
+		// 	[
+		// 		{
+		// 			id: "AwsSolutions-IAM5",
+		// 			reason: "Scoped to Cognito-specific group. Allow wildcard.",
+		// 			appliesTo: [
+		// 				"Action::aws-marketplace:GetEntitlements",
+		// 				"arn:aws:aws-marketplace:::*",
+		// 			],
+		// 		},
+		// 	],
+		// 	true,
+		// );
+
 		// Cognito Group for TenantAdmins
 		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
 			this,
