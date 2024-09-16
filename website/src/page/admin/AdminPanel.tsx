@@ -67,23 +67,6 @@ export default function AdminPanel(currentUser: any) {
   // console.log(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
 
   useEffect(() => {
-    // Retrieve subscription status
-    const fetchSubscriptionStatus = async () => {
-      try {
-        const subscriptionStatus = await getEntitlement(
-          adminCredentials!,
-          tenantId
-        );
-        setSubscriptionStatus(subscriptionStatus);
-      } catch (error) {
-        console.error("Error fetching subscription status:", error);
-      }
-    };
-
-    fetchSubscriptionStatus();
-  }, []);
-
-  useEffect(() => {
     setAdminCredentials(extractField(currentUser, "credentials"));
 
     let usersFetched = false;
@@ -138,6 +121,29 @@ export default function AdminPanel(currentUser: any) {
     fetchUsers();
     // console.log(`adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`);
   }, [adminCredentials]);
+
+  useEffect(() => {
+    // Retrieve subscription status
+    let entitlementFetched = false;
+    const fetchSubscriptionStatus = async () => {
+      if (adminCredentials && !entitlementFetched) {
+        // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
+        try {
+          const subscriptionStatus = await getEntitlement(
+            adminCredentials,
+            tenantId
+          );
+          setSubscriptionStatus(subscriptionStatus);
+        } catch (error) {
+          console.error("Error fetching subscription status:", error);
+        }
+        return () => {
+          if (subscriptionStatus) entitlementFetched = true;
+        };
+      }
+    };
+    fetchSubscriptionStatus();
+  }, []);
 
   function addUser() {
     if (users.length >= subscriptionStatus!.userCount) {
@@ -402,8 +408,9 @@ export default function AdminPanel(currentUser: any) {
               Manage Users
             </Header>
             <p>
-              <b>Entitlement</b>: {subscriptionStatus?.userCount} named users (
-              {users.length} registered)
+              <b>Entitlement</b>: (subscriptionStatus.userCount &&
+              !subscriptionStatus.isExpired) ?{subscriptionStatus?.userCount}{" "}
+              named users ({users.length} registered) : No active subscription
             </p>
           </SpaceBetween>
         }
