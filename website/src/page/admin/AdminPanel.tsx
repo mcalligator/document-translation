@@ -409,8 +409,8 @@ export default function AdminPanel(currentUser: any) {
             </Header>
             <p>
               <b>Entitlement</b>:{" "}
-              {subscriptionStatus!.userCount && !subscriptionStatus!.isExpired
-                ? subscriptionStatus!.userCount +
+              {subscriptionStatus?.userCount && !subscriptionStatus?.isExpired
+                ? subscriptionStatus?.userCount +
                   ` named users ` +
                   users.length +
                   ` registered`
