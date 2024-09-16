@@ -126,14 +126,14 @@ export default function AdminPanel(currentUser: any) {
     // Retrieve subscription status
     let entitlementFetched = false;
     const fetchSubscriptionStatus = async () => {
+      console.log(
+        `Fetching subscription status for tenant ${tenantId} using credentials ${adminCredentials}`
+      );
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
         try {
-          const subscriptionStatus = await getEntitlement(
-            adminCredentials,
-            tenantId
-          );
-          setSubscriptionStatus(subscriptionStatus);
+          const entitlement = await getEntitlement(adminCredentials, tenantId);
+          setSubscriptionStatus(entitlement);
         } catch (error) {
           console.error("Error fetching subscription status:", error);
         }
