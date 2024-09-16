@@ -408,9 +408,13 @@ export default function AdminPanel(currentUser: any) {
               Manage Users
             </Header>
             <p>
-              <b>Entitlement</b>: (subscriptionStatus.userCount &&
-              !subscriptionStatus.isExpired) ?{subscriptionStatus?.userCount}{" "}
-              named users ({users.length} registered) : No active subscription
+              <b>Entitlement</b>:{" "}
+              {subscriptionStatus!.userCount && !subscriptionStatus!.isExpired
+                ? subscriptionStatus!.userCount +
+                  ` named users ` +
+                  users.length +
+                  ` registered`
+                : `No active subscription`}
             </p>
           </SpaceBetween>
         }
