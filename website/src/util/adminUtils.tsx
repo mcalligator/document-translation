@@ -1,5 +1,7 @@
 import entitlementCodes from "./entitlementsCodes.json";
 
+import { Credentials } from "./typeExtensions";
+
 import {
   GetEntitlementsCommand,
   MarketplaceEntitlementServiceClient,
@@ -10,9 +12,17 @@ export interface Entitlement {
   userCount: number;
 }
 
-const getEntitlement = async function (tenantId: string): Promise<Entitlement> {
+const getEntitlement = async function (
+  adminCredentials: Credentials,
+  tenantId: string
+): Promise<Entitlement> {
   const entitlementClient = new MarketplaceEntitlementServiceClient({
     region: "us-east-1",
+    credentials: {
+      accessKeyId: adminCredentials!.accessKeyId,
+      secretAccessKey: adminCredentials!.secretAccessKey,
+      sessionToken: adminCredentials!.sessionToken,
+    },
   });
   const entitlementParams = {
     ProductCode: "c9z0oe0qbge757tw4e5ey0fc0",

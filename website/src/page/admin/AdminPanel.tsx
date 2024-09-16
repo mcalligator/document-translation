@@ -70,7 +70,10 @@ export default function AdminPanel(currentUser: any) {
     // Retrieve subscription status
     const fetchSubscriptionStatus = async () => {
       try {
-        const subscriptionStatus = await getEntitlement(tenantId);
+        const subscriptionStatus = await getEntitlement(
+          adminCredentials!,
+          tenantId
+        );
         setSubscriptionStatus(subscriptionStatus);
       } catch (error) {
         console.error("Error fetching subscription status:", error);
