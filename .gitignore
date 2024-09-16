@@ -14,7 +14,7 @@ infrastructure/**/*.js
 infrastructure/**/*.d.ts
 
 # CFN
-cfnOutputs.json
+cfnOutputs.json*
 
 # FEATURES
 features.json

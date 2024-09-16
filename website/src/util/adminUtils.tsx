@@ -19,9 +19,13 @@ const getEntitlement = async function (tenantId: string): Promise<Entitlement> {
     CustomerIdentifier: tenantId,
   };
   try {
+    console.log(`Getting entitlement for tenant ${tenantId}`);
     const entitlementCommand = new GetEntitlementsCommand(entitlementParams);
     const entitlementResponse =
       await entitlementClient.send(entitlementCommand);
+    console.log(
+      `Entitlement response:\n${JSON.stringify(entitlementResponse)}`
+    );
 
     const isExpired =
       entitlementResponse.hasOwnProperty("Entitlements") === false ||

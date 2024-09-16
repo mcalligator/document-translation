@@ -82,7 +82,6 @@ export default function AdminPanel(currentUser: any) {
 
   useEffect(() => {
     setAdminCredentials(extractField(currentUser, "credentials"));
-    // const adminEmailDomain = extractField(currentUser, "email").split("@")[1]; // No longer required
 
     let usersFetched = false;
     // console.log(
