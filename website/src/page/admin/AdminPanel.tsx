@@ -70,18 +70,18 @@ export default function AdminPanel(currentUser: any) {
     setAdminCredentials(extractField(currentUser, "credentials"));
 
     let usersFetched = false;
-    // console.log(
-    //   `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-    // );
+    console.log(
+      `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
+    );
 
     const fetchUsers = async () => {
       // Retrieve users from Cognito user pool
       if (adminCredentials && !usersFetched) {
         // Only attempt if credentials defined & users not already fetched
         try {
-          // console.log(
-          //   `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-          // );
+          console.log(
+            `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
+          );
           const cognitoClient = new CognitoIdentityProviderClient({
             region: cfnOutputs.awsRegion,
             credentials: {
@@ -119,7 +119,9 @@ export default function AdminPanel(currentUser: any) {
       };
     };
     fetchUsers();
-    // console.log(`adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`);
+    console.log(
+      `adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`
+    );
   }, [adminCredentials]);
 
   useEffect(() => {
@@ -127,7 +129,7 @@ export default function AdminPanel(currentUser: any) {
     let entitlementFetched = false;
     const fetchSubscriptionStatus = async () => {
       console.log(
-        `Fetching subscription status for tenant ${tenantId} using credentials ${adminCredentials}`
+        `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
       );
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
@@ -143,15 +145,15 @@ export default function AdminPanel(currentUser: any) {
       }
     };
     fetchSubscriptionStatus();
-  }, []);
+  }, [adminCredentials]);
 
   function addUser() {
-    if (users.length >= subscriptionStatus!.userCount) {
-      reportStatus(
-        "No remaining entitlement - purchase additional subscription"
-      );
-      return;
-    }
+    // if (users.length >= subscriptionStatus!.userCount) {
+    //   reportStatus(
+    //     "No remaining entitlement - purchase additional subscription"
+    //   );
+    //   return;
+    // }
     const newId = new Date().toISOString(); // Dummy ID for uniquely identifying new user until persisted to Auth store
     let newUser: UserData = {
       id: newId,
@@ -431,7 +433,7 @@ export default function AdminPanel(currentUser: any) {
                 reportStatus={reportStatus}
               ></UserTable>
               <SpaceBetween direction="horizontal" size="l">
-                <Button variant="primary" onClick={addUser}>
+                <Button variant="normal" onClick={addUser}>
                   Add New User
                 </Button>
                 <Button
