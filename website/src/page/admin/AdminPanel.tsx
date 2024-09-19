@@ -56,7 +56,7 @@ export default function AdminPanel(currentUser: any) {
   const organisationName = extractField(currentUser, "custom:organisationName");
 
   const [adminCredentials, setAdminCredentials] = useState<Credentials>();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<Entitlement>();
+  const [subscription, setSubscription] = useState<Entitlement>();
   const [users, setUsers] = useState<UserData[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [rowsSelectedForDeletion, setRowsSelectedForDeletion] = useState(
@@ -128,19 +128,26 @@ export default function AdminPanel(currentUser: any) {
     // Retrieve subscription status
     let entitlementFetched = false;
     const fetchSubscriptionStatus = async () => {
-      console.log(
-        `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
-      );
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
         try {
-          const entitlement = await getEntitlement(adminCredentials, tenantId);
-          setSubscriptionStatus(entitlement);
+          console.log(
+            `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
+          );
+          // const getEntitlementFunctionArn = cfnOutputs.getEntitlementFunctionArn;  // Uncomment once deployed via CDK
+          const getEntitlementFunctionArn =
+            "arn:aws:lambda:eu-west-2:471112910241:function:DocTran-mt-test-app-"; // Temporarily hard-coded
+          const entitlement = await getEntitlement(
+            getEntitlementFunctionArn,
+            adminCredentials,
+            tenantId
+          );
+          setSubscription(entitlement);
         } catch (error) {
           console.error("Error fetching subscription status:", error);
         }
         return () => {
-          if (subscriptionStatus) entitlementFetched = true;
+          if (subscription) entitlementFetched = true;
         };
       }
     };
@@ -411,12 +418,13 @@ export default function AdminPanel(currentUser: any) {
             </Header>
             <p>
               <b>Entitlement</b>:{" "}
-              {subscriptionStatus?.userCount && !subscriptionStatus?.isExpired
-                ? subscriptionStatus?.userCount +
-                  ` named users ` +
-                  users.length +
-                  ` registered`
-                : `No active subscription`}
+              {subscription?.subscriptionStatus === "Subscription valid" &&
+              !subscription?.isExpired
+                ? users.length +
+                  ` registered of ` +
+                  subscription?.userCount +
+                  ` available `
+                : subscription?.subscriptionStatus}
             </p>
           </SpaceBetween>
         }
