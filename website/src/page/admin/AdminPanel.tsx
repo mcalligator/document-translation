@@ -16,8 +16,13 @@ import {
   SpaceBetween,
 } from "@cloudscape-design/components";
 
-import { Entitlement, getEntitlement } from "../../util/adminUtils";
-import { Credentials, UserData } from "../../util/typeExtensions";
+import { Entitlement, getEntitlement } from "./util/adminUtils";
+import deleteUsers from "./util/deleteUsers";
+import {
+  Credentials,
+  DeleteUsersOutcome,
+  UserData,
+} from "./util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
 import filterUsers from "./filterUsers";
@@ -79,7 +84,6 @@ export default function AdminPanel(currentUser: any) {
           const cognitoClient = new CognitoIdentityProviderClient({
             region: cfnOutputs.awsRegion,
             credentials: {
-              // Not possible to assign object directly, strangely
               accessKeyId: adminCredentials!.accessKeyId,
               secretAccessKey: adminCredentials!.secretAccessKey,
               sessionToken: adminCredentials!.sessionToken,
@@ -240,10 +244,8 @@ export default function AdminPanel(currentUser: any) {
               { Name: "email_verified", Value: "true" },
               { Name: "given_name", Value: newUser.firstName },
               { Name: "family_name", Value: newUser.lastName },
-              // { Name: "phone_number", Value: newUser.phoneNumber },
-              { Name: "custom:tenantId", Value: tenantId }, // Replace with customer_id
-              // { Name: "custom:organisationName", Value: organisationName},
-              // { Name: "website", Value: tenantId }, // Temporarily repurposed to enable server-side filtering
+              { Name: "custom:tenantId", Value: tenantId }, // Replace with customer_id?
+              { Name: "custom:organisationName", Value: organisationName },
             ],
           };
           const createUserCommand = new AdminCreateUserCommand(
@@ -319,7 +321,7 @@ export default function AdminPanel(currentUser: any) {
     );
     let debugUsers = ""; // Delete after debugging
     if (rowsToDelete.has(user.id)) {
-      console.log("  User ID IS in the list"); // Delete after debugging
+      console.log("  User ID IS in the list, so needs to be removed"); // Delete after debugging
       tempUsers.delete(user.id); // Remove user from set (not id property from user)
       for (const u of tempUsers) {
         debugUsers += u + " | ";
@@ -327,7 +329,7 @@ export default function AdminPanel(currentUser: any) {
       console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
       setrowsToDelete(tempUsers);
     } else {
-      console.log("  User ID is NOT in the list yet");
+      console.log("  User ID is NOT in the list yet, so needs to be added");
       tempUsers.add(user.id); // Add user to set (not id property to user)
       for (const u of tempUsers) {
         debugUsers += u + " | ";
@@ -343,58 +345,24 @@ export default function AdminPanel(currentUser: any) {
   }
 
   async function handleClickDeleteUser() {
-    console.log(
-      "Actual set of users to be deleted: " +
-        JSON.stringify(Array.from(rowsToDelete))
-    ); // Delete after debugging
-    // Start of code to be moved to useSaveChanges.tsx
-    const cognitoClient = new CognitoIdentityProviderClient({
-      region: cfnOutputs.awsRegion,
-      credentials: {
-        accessKeyId: adminCredentials!.accessKeyId,
-        secretAccessKey: adminCredentials!.secretAccessKey,
-        sessionToken: adminCredentials!.sessionToken,
-      },
-    });
+    const deleteUsersOutcome: DeleteUsersOutcome = await deleteUsers(
+      rowsToDelete,
+      adminCredentials!
+    );
 
-    for (const userId of rowsToDelete) {
-      try {
-        const deleteUserParams = {
-          UserPoolId: cfnOutputs.awsUserPoolsId,
-          Username: userId,
-        };
-        const deleteUserCommand = new AdminDeleteUserCommand(deleteUserParams);
-        const deleteUserResponse = await cognitoClient.send(deleteUserCommand); // Since this runs asynchronously, and is an effect, move to a hook
-        console.log(
-          "Result of user deletion: " + JSON.stringify(deleteUserResponse)
-        );
-        console.log("User set before deletion:");
-        console.table(users);
-        let usersCopy = [...users]; // Temporary local variable to shadow component state
-        usersCopy.splice(
-          usersCopy.findIndex((user) => user.id === userId),
-          1
-        );
-        console.log("Shadow user set after deletion:");
-        console.table(usersCopy);
-
-        setUsers(usersCopy); // Update state with remaining users
-        console.log("State user set after deletion:");
-        console.table(users);
-      } catch (error) {
-        if (error instanceof UserNotFoundException) {
-          reportStatus(
-            "Page must be refreshed before deleting newly-created users"
-          );
-          console.error(
-            "Attempt to delete newly-created user before refreshing page"
-          );
-        } else {
-          reportStatus("Error deleting user");
-          console.error("Error deleting user:", error);
-        }
-      }
+    console.log("User set before deletion:");
+    console.table(users);
+    let usersCopy = [...users]; // Temporary local variable to shadow component state
+    for (const deletedUserId of deleteUsersOutcome.usersDeleted) {
+      usersCopy.splice(
+        usersCopy.findIndex((user) => user.id === deletedUserId),
+        1
+      );
     }
+    console.log("Shadow user set after deletion:");
+    console.table(usersCopy);
+    setUsers(usersCopy);
+
     // Reset set of users deleted:
     let tempUsers = rowsToDelete;
     tempUsers.clear();
