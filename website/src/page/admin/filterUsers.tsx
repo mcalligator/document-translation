@@ -1,4 +1,4 @@
-import { UserData } from "../../util/typeExtensions";
+import { UserData } from "./util/typeExtensions";
 
 import {
   AttributeType,

@@ -11,7 +11,7 @@ import React, {
   useState,
 } from "react";
 
-import { UserData } from "../../util/typeExtensions.js";
+import { UserData } from "./util/typeExtensions.js";
 
 import UserRow from "./userRow";
 

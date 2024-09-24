@@ -5,7 +5,7 @@ import React, { ChangeEvent, useEffect, useState } from "react";
 
 import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
-import { UserData } from "../../util/typeExtensions";
+import { UserData } from "./util/typeExtensions";
 
 interface UserRowProps {
   user: UserData;

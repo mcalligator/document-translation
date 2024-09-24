@@ -1,5 +1,3 @@
-import entitlementCodes from "./entitlementsCodes.json";
-
 import { Credentials } from "./typeExtensions";
 
 import {

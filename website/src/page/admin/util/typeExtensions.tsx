@@ -33,3 +33,9 @@ export interface CognitoUserData {
     },
   ];
 }
+
+export interface DeleteUsersOutcome {
+  message: string;
+  details: string;
+  usersDeleted: Set<string>;
+}

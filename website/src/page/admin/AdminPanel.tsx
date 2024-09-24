@@ -18,6 +18,8 @@ import {
 
 import { Entitlement, getEntitlement } from "./util/adminUtils";
 import deleteUsers from "./util/deleteUsers";
+import saveChangedUsers from "./util/saveChangedUsers";
+import saveNewUsers from "./util/saveNewUsers";
 import {
   Credentials,
   DeleteUsersOutcome,
@@ -29,13 +31,8 @@ import filterUsers from "./filterUsers";
 import UserTable from "./userTable";
 
 import {
-  AdminCreateUserCommand,
-  AdminCreateUserCommandInput,
-  AdminDeleteUserCommand,
-  AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
   ListUsersCommand,
-  UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 export default function AdminPanel(currentUser: any) {
@@ -217,94 +214,45 @@ export default function AdminPanel(currentUser: any) {
   async function handleClickSaveChanges(e: Event) {
     // Write both new and changed users to back end
     e.preventDefault();
-    const changedUsers = users.filter((user) => user.isChanged);
-    const newUsers = users.filter((user) => user.isNew); // Separate array for new users to replace local temporary IDs after write
-    let usersCopy = [...users]; // Local variable to shadow state users array
-
-    const cognitoClient = new CognitoIdentityProviderClient({
-      region: cfnOutputs.awsRegion,
-      credentials: {
-        accessKeyId: adminCredentials!.accessKeyId,
-        secretAccessKey: adminCredentials!.secretAccessKey,
-        sessionToken: adminCredentials!.sessionToken,
-      },
-    });
-
-    // Add new users to Cognito user pool
+    // Code to move to saveChanges.tsx
+    const newUsers = users.filter((user) => user.isNew);
     if (newUsers.length > 0) {
-      try {
-        for (const newUser of newUsers) {
-          const createUserParams: AdminCreateUserCommandInput = {
-            UserPoolId: cfnOutputs.awsUserPoolsId,
-            DesiredDeliveryMediums: ["EMAIL"],
-            Username: newUser.email,
-            ForceAliasCreation: true,
-            UserAttributes: [
-              { Name: "email", Value: newUser.email },
-              { Name: "email_verified", Value: "true" },
-              { Name: "given_name", Value: newUser.firstName },
-              { Name: "family_name", Value: newUser.lastName },
-              { Name: "custom:tenantId", Value: tenantId }, // Replace with customer_id?
-              { Name: "custom:organisationName", Value: organisationName },
-            ],
-          };
-          const createUserCommand = new AdminCreateUserCommand(
-            createUserParams
-          );
-          const createUserResponse =
-            await cognitoClient.send(createUserCommand);
-          // Set user's local id to value of "sub" in identity store:
-          const newUserId = createUserResponse.User!.Attributes!.find(
-            (attr) => {
-              return attr.Name === "sub";
-            }
-          );
-          let tempUser = usersCopy.find(
-            (userCopy) => userCopy.email === newUser.email
-          );
-          tempUser!.id = newUserId!.Value!;
-          tempUser!.isNew = false;
-        }
+      const saveNewUsersOutcome = await saveNewUsers(
+        newUsers,
+        adminCredentials!
+      );
+      // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
+      if (saveNewUsersOutcome.details !== "")
+        console.log(saveNewUsersOutcome.details);
 
-        // Prepare to re-render new (and changed?) users:
-        newUsers.length = 0; // Clear newUsers array now they are committed to the identity store
-
-        console.log("handleClickSaveChanges: usersCopy");
-        console.table(usersCopy);
-        setUsers(usersCopy); // Update state so changes are reflected on the page
-        console.log("handleClickSaveChanges: users");
-        console.table(users);
-      } catch (error) {
-        console.error("Error adding users: ", error);
-      }
+      const updateUsersWithNewIds = (savedUsers: UserData[]) => {
+        // do only if new users
+        setUsers((inMemoryUsers) =>
+          inMemoryUsers.map((user) => {
+            const matchedNewUser = savedUsers.find(
+              (newUser) => newUser.email === user.email
+            );
+            console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`);
+            return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
+          })
+        );
+      };
+      updateUsersWithNewIds(saveNewUsersOutcome.usersAdded);
+      reportStatus(saveNewUsersOutcome.message);
     }
 
-    // Update changed users in Cognito user pool
+    const changedUsers = users.filter((user) => user.isChanged);
+
     if (changedUsers.length > 0) {
-      try {
-        for (const changedUser of changedUsers) {
-          const updateUserAttributesParams = {
-            UserPoolId: cfnOutputs.awsUserPoolsId,
-            Username: changedUser.email,
-            UserAttributes: [
-              { Name: "email", Value: changedUser.email },
-              { Name: "given_name", Value: changedUser.firstName },
-              { Name: "family_name", Value: changedUser.lastName },
-            ],
-          };
-          const updateUserAttributesCommand =
-            new AdminUpdateUserAttributesCommand(updateUserAttributesParams);
-          const updateUserAttributesResponse = await cognitoClient.send(
-            updateUserAttributesCommand
-          );
-          console.log(
-            " Output from update request: " +
-              JSON.stringify(updateUserAttributesResponse)
-          );
-        }
-      } catch (error) {
-        console.error("Error updating users: ", error);
-      }
+      console.log(`${changedUsers.length} users updated`);
+      const saveChangedUsersOutcome = await saveChangedUsers(
+        changedUsers,
+        adminCredentials!
+      );
+
+      if (saveChangedUsersOutcome.details !== "")
+        console.log(saveChangedUsersOutcome.details);
+      reportStatus(saveChangedUsersOutcome.message);
     }
   }
 
@@ -362,6 +310,9 @@ export default function AdminPanel(currentUser: any) {
     console.log("Shadow user set after deletion:");
     console.table(usersCopy);
     setUsers(usersCopy);
+    if (deleteUsersOutcome.details !== "")
+      console.log(deleteUsersOutcome.details);
+    reportStatus(deleteUsersOutcome.message);
 
     // Reset set of users deleted:
     let tempUsers = rowsToDelete;
