@@ -9,8 +9,6 @@ import {
   LambdaClient,
 } from "@aws-sdk/client-lambda";
 
-// import { GetEntitlementsCommand, MarketplaceEntitlementServiceClient } from "@aws-sdk/client-marketplace-entitlement-service";
-
 export interface Entitlement {
   subscriptionStatus: string;
   isExpired: boolean;
@@ -39,43 +37,19 @@ const getEntitlement = async function (
       ProductCode: "c9z0oe0qbge757tw4e5ey0fc0",
     }),
   };
-  // const entitlementClient = new MarketplaceEntitlementServiceClient({
-  //   region: "us-east-1",
-  //   credentials: {
-  //     accessKeyId: adminCredentials!.accessKeyId,
-  //     secretAccessKey: adminCredentials!.secretAccessKey,
-  //     sessionToken: adminCredentials!.sessionToken,
-  //   },
-  // });
-  // const entitlementParams = {
-  //   ProductCode: "c9z0oe0qbge757tw4e5ey0fc0",
-  //   CustomerIdentifier: tenantId,
-  // };
+
   try {
-    console.log(`Getting entitlement for tenant ${tenantId}`);
+    // console.log(`Getting entitlement for tenant ${tenantId}`);
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse = await lambdaClient.send(lambdaInvokeCommand);
     const entitlementResponse: Entitlement = JSON.parse(
       new TextDecoder().decode(lambdaInvokeResponse.Payload)
     );
 
-    // const entitlementCommand = new GetEntitlementsCommand(entitlementParams);
-    // const entitlementResponse =
-    //   await entitlementClient.send(entitlementCommand);
-    console.log(
-      `Entitlement response:\n${JSON.stringify(entitlementResponse)}`
-    );
-
-    // const isExpired =
-    //   entitlementResponse.hasOwnProperty("Entitlements") === false ||
-    //   entitlementResponse.Entitlements!.length === 0 ||
-    //   new Date(entitlementResponse.Entitlements![0].ExpirationDate!) <
-    //     new Date();
-
-    // const entitlementCode = entitlementResponse.Entitlements![0].Dimension;
-    // const entitlement = entitlementCodes.find(
-    //   ({ entitlementId }) => entitlementId === entitlementCode
+    // console.log(
+    //   `Entitlement response:\n${JSON.stringify(entitlementResponse)}`
     // );
+
     return {
       subscriptionStatus: entitlementResponse.subscriptionStatus,
       isExpired: entitlementResponse.isExpired,

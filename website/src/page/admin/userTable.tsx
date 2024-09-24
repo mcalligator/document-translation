@@ -64,7 +64,7 @@ export default function UserTable({
       // e actually of type MouseMove, but broader Event type required for adding / removing listeners
       const gridColumns: string[] = columns.map((col: Header, i) => {
         if (i === activeIndex) {
-          const widthAdjustment = 54; //Workaround for strange sudden increase in column width when changed
+          const widthAdjustment = 54; // Attempt to work around strange jump in column width when changed
           const width =
             e.clientX - col.colRef.current!.offsetLeft - widthAdjustment;
           // console.log(

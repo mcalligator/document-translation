@@ -36,32 +36,26 @@ import {
 export default function AdminPanel(currentUser: any) {
   /* To do:
     1. Check for expired AWS Session Token and refresh.
-    2. Retrieve Marketplace entitlement from relevant API when solution integrated - PARTIALLY DONE.
-    3. Clear status message when condition no longer applies - DONE (I think).
-    5. Replace cognitoClient with shared component-level object.
-    6. Get user.id for newly-created user in UserRow to be from server, not stale local value.
-    7. After deleting user, disable Delete User button - DONE.
-    8. *** Enable Cancel button functionality.
-    9. Get Input fields for new users to be same width as those above when data being entered.
-   10. Set initial text column widths to be that of longest content.
-   11. *** Add pagination to retrieving userse from Cognito - fast-follow.
-   12. Change input fields' colour to signify invalid entry.
-   13. *** Redeploy CTT with organisationName and phoneNumber attributes in user pool; enable in front end - DONE.
-   14. Refine TenantAdmins Cognito permissions, adding SNS Publish - DONE.
+    2. Clear status message when condition no longer applies - DONE (I think).
+    3. Replace cognitoClient with shared component-level object.
+    4. Get user.id for newly-created user in UserRow to be from server, not stale local value.
+    5. After deleting user, disable Delete User button - DONE.
+    6. *** Enable Cancel button functionality.
+    7. Get Input fields for new users to be same width as those above when data being entered.
+    8. Set initial text column widths to be that of longest content.
+    9. *** Add pagination to retrieving userse from Cognito - fast-follow.
+   10. Change input fields' colour to signify invalid entry.
   */
 
-  // let entitlement = 5; // Placeholder value
   const tenantId = extractField(currentUser, "custom:tenantId");
-  // const subscriptionStatus = getEntitlement(tenantId);
-  const organisationName = extractField(currentUser, "custom:organisationName");
+  const organisationName = extractField(currentUser, "custom:organisationName"); // To do: identify where this needs to be used
 
   const [adminCredentials, setAdminCredentials] = useState<Credentials>();
   const [subscription, setSubscription] = useState<Entitlement>();
   const [users, setUsers] = useState<UserData[]>([]);
+  const [originalUsers, setOriginalUsers] = useState<UserData[]>([]); // To enable simple cancellation of all changes before save
   const [statusMessage, setStatusMessage] = useState("");
-  const [rowsSelectedForDeletion, setRowsSelectedForDeletion] = useState(
-    new Set<string>()
-  );
+  const [rowsToDelete, setrowsToDelete] = useState(new Set<string>());
   const [disableDeleteButton, setDisableDeleteButton] = useState(true);
 
   // console.log(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
@@ -70,18 +64,18 @@ export default function AdminPanel(currentUser: any) {
     setAdminCredentials(extractField(currentUser, "credentials"));
 
     let usersFetched = false;
-    console.log(
-      `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-    );
+    // console.log(
+    //   `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
+    // );
 
     const fetchUsers = async () => {
       // Retrieve users from Cognito user pool
       if (adminCredentials && !usersFetched) {
         // Only attempt if credentials defined & users not already fetched
         try {
-          console.log(
-            `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-          );
+          // console.log(
+          //   `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
+          // );
           const cognitoClient = new CognitoIdentityProviderClient({
             region: cfnOutputs.awsRegion,
             credentials: {
@@ -119,9 +113,9 @@ export default function AdminPanel(currentUser: any) {
       };
     };
     fetchUsers();
-    console.log(
-      `adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`
-    );
+    // console.log(
+    //   `adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`
+    // );
   }, [adminCredentials]);
 
   useEffect(() => {
@@ -131,9 +125,9 @@ export default function AdminPanel(currentUser: any) {
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
         try {
-          console.log(
-            `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
-          );
+          // console.log(
+          //   `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
+          // );
           // const getEntitlementFunctionArn = cfnOutputs.getEntitlementFunctionArn;  // Uncomment once deployed via CDK
           const getEntitlementFunctionArn =
             "arn:aws:lambda:eu-west-2:471112910241:function:DocTran-mt-test-app-"; // Temporarily hard-coded
@@ -154,13 +148,13 @@ export default function AdminPanel(currentUser: any) {
     fetchSubscriptionStatus();
   }, [adminCredentials]);
 
-  function addUser() {
-    // if (users.length >= subscriptionStatus!.userCount) {
-    //   reportStatus(
-    //     "No remaining entitlement - purchase additional subscription"
-    //   );
-    //   return;
-    // }
+  function handleClickAddUser() {
+    if (users.length >= subscription!.userCount) {
+      reportStatus(
+        "No remaining entitlement - purchase additional subscription"
+      );
+      return;
+    }
     const newId = new Date().toISOString(); // Dummy ID for uniquely identifying new user until persisted to Auth store
     let newUser: UserData = {
       id: newId,
@@ -168,11 +162,12 @@ export default function AdminPanel(currentUser: any) {
       lastName: "",
       email: "",
       tenantId: tenantId,
+      organisationName: organisationName,
       isNew: true,
       isChanged: false,
       isValid: false,
     };
-    const userArray = [...users]; // Create copy, not reference, so React will detect change and trigger re-render.
+    const userArray = [...users]; // Create copy, not reference, so React detects change and re-renders.
     userArray.push(newUser);
     setUsers(userArray);
     // console.log(" After adding new blank user:" + JSON.stringify(userArray));
@@ -225,7 +220,6 @@ export default function AdminPanel(currentUser: any) {
     const cognitoClient = new CognitoIdentityProviderClient({
       region: cfnOutputs.awsRegion,
       credentials: {
-        // Not possible to assign object directly, strangely
         accessKeyId: adminCredentials!.accessKeyId,
         secretAccessKey: adminCredentials!.secretAccessKey,
         sessionToken: adminCredentials!.sessionToken,
@@ -273,11 +267,11 @@ export default function AdminPanel(currentUser: any) {
         // Prepare to re-render new (and changed?) users:
         newUsers.length = 0; // Clear newUsers array now they are committed to the identity store
 
-        // console.log("handleClickSaveChanges: usersCopy");
-        // console.table(usersCopy);
+        console.log("handleClickSaveChanges: usersCopy");
+        console.table(usersCopy);
         setUsers(usersCopy); // Update state so changes are reflected on the page
-        // console.log("handleClickSaveChanges: users");
-        // console.table(users);
+        console.log("handleClickSaveChanges: users");
+        console.table(users);
       } catch (error) {
         console.error("Error adding users: ", error);
       }
@@ -301,10 +295,10 @@ export default function AdminPanel(currentUser: any) {
           const updateUserAttributesResponse = await cognitoClient.send(
             updateUserAttributesCommand
           );
-          // console.log(
-          //   " Output from update request: " +
-          //     JSON.stringify(updateUserAttributesResponse)
-          // );
+          console.log(
+            " Output from update request: " +
+              JSON.stringify(updateUserAttributesResponse)
+          );
         }
       } catch (error) {
         console.error("Error updating users: ", error);
@@ -314,70 +308,79 @@ export default function AdminPanel(currentUser: any) {
 
   function deleteToggleChanges(user: UserData) {
     // userRow's user variable not updated when new user added
-    let tempUsers = rowsSelectedForDeletion; // Local shadow variable for users to be deleted
-    // console.log("User passed in: " + user.id);  // Delete after debugging
+    let tempUsers = rowsToDelete; // Local shadow variable for users to be deleted
+    console.log("User passed in: " + user.id); // Delete after debugging
     // Disable Delete User button only when NO checkboxes are ticked
-    // console.log(
-    //   "rowsSelectedForDeletion includes " +
-    //     user.id +
-    //     "? " +
-    //     rowsSelectedForDeletion.has(user.id)
-    // );
-    // let debugUsers = "";  // Delete after debugging
-    if (rowsSelectedForDeletion.has(user.id)) {
-      // console.log("  User ID IS in the list");  // Delete after debugging
+    console.log(
+      "rowsSelectedForDeletion includes " +
+        user.id +
+        "? " +
+        rowsToDelete.has(user.id)
+    );
+    let debugUsers = ""; // Delete after debugging
+    if (rowsToDelete.has(user.id)) {
+      console.log("  User ID IS in the list"); // Delete after debugging
       tempUsers.delete(user.id); // Remove user from set (not id property from user)
-      // for (const u of tempUsers) { debugUsers += u + ":" };  // Delete after debugging
-      // console.log(" Updated set of users to be deleted: " + debugUsers);  // Delete after debugging
-      setRowsSelectedForDeletion(tempUsers);
+      for (const u of tempUsers) {
+        debugUsers += u + " | ";
+      } // Delete after debugging
+      console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
+      setrowsToDelete(tempUsers);
     } else {
-      // console.log("  User ID is NOT in the list");
+      console.log("  User ID is NOT in the list yet");
       tempUsers.add(user.id); // Add user to set (not id property to user)
-      // for (const u of tempUsers) { debugUsers += u + ":" };  // Delete after debugging
-      // console.log(" Updated set of users to be deleted: " + debugUsers);  // Delete after debugging
-      setRowsSelectedForDeletion(tempUsers);
+      for (const u of tempUsers) {
+        debugUsers += u + " | ";
+      } // Delete after debugging
+      console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
+      setrowsToDelete(tempUsers);
     }
-    // console.log("No. rows to be deleted: " + rowsSelectedForDeletion.size);
-    // console.log("Rows with Delete checkbox ticked: " + debugUsers);  // Delete after debugging
+    console.log("No. rows to be deleted: " + rowsToDelete.size);
+    console.log("Rows with Delete checkbox ticked: " + debugUsers); // Delete after debugging
     tempUsers.size === 0
       ? setDisableDeleteButton(true)
       : setDisableDeleteButton(false);
   }
 
   async function handleClickDeleteUser() {
-    // console.log("Deleting users " + JSON.stringify(Array.from(rowsSelectedForDeletion)));
+    console.log(
+      "Actual set of users to be deleted: " +
+        JSON.stringify(Array.from(rowsToDelete))
+    ); // Delete after debugging
+    // Start of code to be moved to useSaveChanges.tsx
     const cognitoClient = new CognitoIdentityProviderClient({
       region: cfnOutputs.awsRegion,
       credentials: {
-        // Not possible to assign object directly, strangely
         accessKeyId: adminCredentials!.accessKeyId,
         secretAccessKey: adminCredentials!.secretAccessKey,
         sessionToken: adminCredentials!.sessionToken,
       },
     });
 
-    // let usersToDelete = Array<Id>();
-    for (const userId of rowsSelectedForDeletion) {
+    for (const userId of rowsToDelete) {
       try {
         const deleteUserParams = {
           UserPoolId: cfnOutputs.awsUserPoolsId,
           Username: userId,
         };
         const deleteUserCommand = new AdminDeleteUserCommand(deleteUserParams);
-        await cognitoClient.send(deleteUserCommand); // No response metadata required
+        const deleteUserResponse = await cognitoClient.send(deleteUserCommand); // Since this runs asynchronously, and is an effect, move to a hook
+        console.log(
+          "Result of user deletion: " + JSON.stringify(deleteUserResponse)
+        );
+        console.log("User set before deletion:");
+        console.table(users);
         let usersCopy = [...users]; // Temporary local variable to shadow component state
         usersCopy.splice(
           usersCopy.findIndex((user) => user.id === userId),
           1
         );
+        console.log("Shadow user set after deletion:");
+        console.table(usersCopy);
 
-        // Reset set of users deleted:
-        let tempUsers = rowsSelectedForDeletion;
-        tempUsers.clear();
-        // Post-deletion clean-up:
-        setRowsSelectedForDeletion(tempUsers); // Clear state variable
-        setDisableDeleteButton(true);
         setUsers(usersCopy); // Update state with remaining users
+        console.log("State user set after deletion:");
+        console.table(users);
       } catch (error) {
         if (error instanceof UserNotFoundException) {
           reportStatus(
@@ -392,7 +395,12 @@ export default function AdminPanel(currentUser: any) {
         }
       }
     }
-    // console.log("Array of users to be deleted:\n" + JSON.stringify(usersToDelete));
+    // Reset set of users deleted:
+    let tempUsers = rowsToDelete;
+    tempUsers.clear();
+    // Post-deletion clean-up:
+    setrowsToDelete(tempUsers); // Clear state variable
+    setDisableDeleteButton(true);
   }
 
   function handleCancelClick(): void {
@@ -416,8 +424,13 @@ export default function AdminPanel(currentUser: any) {
             >
               Manage Users
             </Header>
-            <p>
-              <b>Entitlement</b>:{" "}
+            <Container
+              header={
+                <Header variant="h2" description="">
+                  Entitlement
+                </Header>
+              }
+            >
               {subscription?.subscriptionStatus === "Subscription valid" &&
               !subscription?.isExpired
                 ? users.length +
@@ -425,7 +438,7 @@ export default function AdminPanel(currentUser: any) {
                   subscription?.userCount +
                   ` available `
                 : subscription?.subscriptionStatus}
-            </p>
+            </Container>
           </SpaceBetween>
         }
       >
@@ -436,12 +449,16 @@ export default function AdminPanel(currentUser: any) {
                 headings={headings}
                 minCellWidth={100}
                 users={users}
-                updateUserSetWithChanges={updateUserSetWithChanges} //Callback function to surface changes for write
+                updateUserSetWithChanges={updateUserSetWithChanges} // Callback function to surface changes for write
                 deleteToggleChanges={deleteToggleChanges}
                 reportStatus={reportStatus}
               ></UserTable>
               <SpaceBetween direction="horizontal" size="l">
-                <Button variant="normal" onClick={addUser}>
+                <Button
+                  disabled={!subscription || subscription.userCount < 1}
+                  variant="normal"
+                  onClick={handleClickAddUser}
+                >
                   Add New User
                 </Button>
                 <Button

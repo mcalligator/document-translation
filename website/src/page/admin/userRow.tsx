@@ -41,7 +41,7 @@ export default function UserRow({
     // );
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
     // let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
-    e.target.style.width = "30px";
+    // e.target.style.width = "30px";
     e.target.style.width = `${e.target.scrollWidth}px`;
     const fieldName: string = e.target.name;
     if (!userCopy.isNew) {
@@ -89,9 +89,9 @@ export default function UserRow({
       //     " for following user is valid: " +
       //     JSON.stringify(userCopy)
       // );
-      setUserDetails(userCopy); // Is this still necessary in the light of updateUserSetWithChanges?
+      setUserDetails(userCopy);
       // console.log(" handleBlur - updated user: " + JSON.stringify(userDetails));
-      updateUserSetWithChanges(userCopy);
+      updateUserSetWithChanges(userCopy); // Not sure this is ideal: updates users array (and hence re-renders) every time focus leaves any field in any userRow
       // To do: Change field's background colour to light orange indicating it needs to be saved
     } else {
       reportStatus(result); // Notify user of invalid entry
