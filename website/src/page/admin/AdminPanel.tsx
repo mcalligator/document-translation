@@ -20,11 +20,7 @@ import { Entitlement, getEntitlement } from "./util/adminUtils";
 import deleteUsers from "./util/deleteUsers";
 import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
-import {
-  Credentials,
-  DeleteUsersOutcome,
-  UserData,
-} from "./util/typeExtensions";
+import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
 import filterUsers from "./filterUsers";
@@ -40,9 +36,9 @@ export default function AdminPanel(currentUser: any) {
     1. Check for expired AWS Session Token and refresh.
     2. Clear status message when condition no longer applies - DONE (I think).
     3. Replace cognitoClient with shared component-level object.
-    4. Get user.id for newly-created user in UserRow to be from server, not stale local value.
+    4. Get user.id for newly-created user in UserRow to be from server, not stale local value - DONE
     5. After deleting user, disable Delete User button - DONE.
-    6. *** Enable Cancel button functionality.
+    6. Enable Cancel button functionality - IN PROGRESS
     7. Get Input fields for new users to be same width as those above when data being entered.
     8. Set initial text column widths to be that of longest content.
     9. *** Add pagination to retrieving userse from Cognito - fast-follow.
@@ -97,14 +93,18 @@ export default function AdminPanel(currentUser: any) {
           // console.log(
           //   `List users response:\n${JSON.stringify(listUsersResponse)}`
           // );
-          let retrievedUsers: UserData[] = [];
+          // let retrievedUsers: UserData[] = [];
           if (listUsersResponse.Users!.length > 0) {
-            retrievedUsers = filterUsers(listUsersResponse, tenantId);
+            const retrievedUsers = filterUsers(listUsersResponse, tenantId);
+            setUsers(retrievedUsers);
+
+            const originalUsersLocal = structuredClone(retrievedUsers);
+            setOriginalUsers(originalUsersLocal); // To enable changes to be reverted without saving
           } else {
-            retrievedUsers = [];
+            setUsers([]);
+            setOriginalUsers([]);
           }
           // const users: UserData[] = [];
-          setUsers(retrievedUsers);
         } catch (error) {
           console.error("Error fetching users:", error);
         }
@@ -151,11 +151,31 @@ export default function AdminPanel(currentUser: any) {
 
   function handleClickAddUser() {
     if (users.length >= subscription!.userCount) {
-      reportStatus(
-        "No remaining entitlement - purchase additional subscription"
-      );
+      reportStatus("No remaining entitlement - purchase additional subscription");
       return;
     }
+    const usersLocal = [...users]; // Create copy, not reference, so React detects change and re-renders.
+    let originalUsersLocal;
+    if (originalUsers.length === 0) {
+      // i.e. first change since users state variable was last set
+      // console.log(`originalUsers is empty`);
+      // Create copy of both the array and the objects within:
+      originalUsersLocal = usersLocal.map((user: UserData) => {
+        return { ...user };
+      });
+      // setOriginalUsers(originalUsersLocal);
+      // console.log(`handleClickAddUser - originalUsersLocal from usersLocal:`);
+      // console.table(originalUsersLocal);
+    } else {
+      // console.log(`handleClickAddUser - originalUsers (2nd and later iterations):`);
+      // console.table(originalUsers);
+      originalUsersLocal = originalUsers.map((user) => {
+        return { ...user };
+      });
+    }
+    // console.log(`handleClickAddUser - usersLocal initially:`);
+    // console.table(usersLocal);
+
     const newId = new Date().toISOString(); // Dummy ID for uniquely identifying new user until persisted to Auth store
     let newUser: UserData = {
       id: newId,
@@ -168,42 +188,52 @@ export default function AdminPanel(currentUser: any) {
       isChanged: false,
       isValid: false,
     };
-    const userArray = [...users]; // Create copy, not reference, so React detects change and re-renders.
-    userArray.push(newUser);
-    setUsers(userArray);
-    // console.log(" After adding new blank user:" + JSON.stringify(userArray));
+    usersLocal.push(newUser);
+    // console.log(`handleClickAddUser - usersLocal after new user added:`);
+    // console.table(usersLocal);
+    setUsers(usersLocal);
+    // console.log(" After adding new blank user:" + JSON.stringify(usersLocal));
   }
 
   function updateUserSetWithChanges(changedUser: UserData): void {
     /*
       Updates the users state variable with the new values of the added / changed users
     */
-    const userArray = [...users]; // Temporary working copy of users state array for manipulation
-    // console.log(
-    //   `updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`
-    // );
-    // console.table(userArray);
+    const usersLocal = [...users]; // Temporary working copy of users state array for manipulation
+    let originalUsersLocal: UserData[];
+
+    if (originalUsers.length === 0) {
+      // console.log(`originalUsers is empty`);
+      // Create copy of both the array and the objects within:
+      originalUsersLocal = usersLocal.map((user: UserData) => {
+        return { ...user };
+      });
+      // setOriginalUsers(originalUsersLocal);
+      // console.log(`updateUserSetWithChanges - originalUsersLocal from usersLocal:`);
+      // console.table(originalUsersLocal);
+    } else {
+      // console.log(`updateUserSetWithChanges - originalUsers (2nd and later iterations):`);
+      // console.table(originalUsers);
+      originalUsersLocal = originalUsers.map((user) => {
+        return { ...user };
+      });
+    }
+    // console.log(`updateUserSetWithChanges - Current users:`);
+    // console.table(users);
+    // console.log(`updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`);
+    // console.table(usersLocal);
     try {
-      const userIndex = userArray.findIndex(
-        (user) => user.id === changedUser.id
-      );
+      const userIndex = usersLocal.findIndex((user) => user.id === changedUser.id);
       // console.log("Index of changed user: " + userIndex);
-      Object.assign(userArray[userIndex], changedUser);
+      Object.assign(usersLocal[userIndex], changedUser);
       // console.log("Current user set:");
-      // console.table(userArray);
-      setUsers(userArray); // Update state with changed users
+      // console.table(usersLocal);
+      // console.log(`originalUsersLocal after updating usersLocal:`);
+      // console.table(originalUsersLocal);
+      setUsers(usersLocal); // Update state with changed users
     } catch (error) {
-      if (error instanceof TypeError) {
-        // Temporary workaround for stale closure
-        reportStatus("Refresh the page before editing newly-created users");
-        console.error(
-          "Admin Panel not refreshed before newly-created user added",
-          error
-        );
-      } else {
-        reportStatus("Error updating user");
-        console.error("Error updating user set with changes:", error);
-      }
+      reportStatus("Error updating user");
+      console.error("Error updating user set with changes:", error);
     }
   }
 
@@ -217,22 +247,16 @@ export default function AdminPanel(currentUser: any) {
     // Code to move to saveChanges.tsx
     const newUsers = users.filter((user) => user.isNew);
     if (newUsers.length > 0) {
-      const saveNewUsersOutcome = await saveNewUsers(
-        newUsers,
-        adminCredentials!
-      );
+      const saveNewUsersOutcome = await saveNewUsers(newUsers, adminCredentials!);
       // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
-      if (saveNewUsersOutcome.details !== "")
-        console.log(saveNewUsersOutcome.details);
+      // if (saveNewUsersOutcome.details !== "") console.log(saveNewUsersOutcome.details);
 
       const updateUsersWithNewIds = (savedUsers: UserData[]) => {
         // do only if new users
         setUsers((inMemoryUsers) =>
           inMemoryUsers.map((user) => {
-            const matchedNewUser = savedUsers.find(
-              (newUser) => newUser.email === user.email
-            );
-            console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`);
+            const matchedNewUser = savedUsers.find((newUser) => newUser.email === user.email);
+            // console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`);
             return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
           })
         );
@@ -244,14 +268,10 @@ export default function AdminPanel(currentUser: any) {
     const changedUsers = users.filter((user) => user.isChanged);
 
     if (changedUsers.length > 0) {
-      console.log(`${changedUsers.length} users updated`);
-      const saveChangedUsersOutcome = await saveChangedUsers(
-        changedUsers,
-        adminCredentials!
-      );
+      // console.log(`${changedUsers.length} users updated`);
+      const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
 
-      if (saveChangedUsersOutcome.details !== "")
-        console.log(saveChangedUsersOutcome.details);
+      // if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details);
       reportStatus(saveChangedUsersOutcome.message);
     }
   }
@@ -259,37 +279,30 @@ export default function AdminPanel(currentUser: any) {
   function deleteToggleChanges(user: UserData) {
     // userRow's user variable not updated when new user added
     let tempUsers = rowsToDelete; // Local shadow variable for users to be deleted
-    console.log("User passed in: " + user.id); // Delete after debugging
+    // console.log("User passed in: " + user.id); // Delete after debugging
     // Disable Delete User button only when NO checkboxes are ticked
-    console.log(
-      "rowsSelectedForDeletion includes " +
-        user.id +
-        "? " +
-        rowsToDelete.has(user.id)
-    );
+    // console.log("rowsSelectedForDeletion includes " + user.id + "? " + rowsToDelete.has(user.id));
     let debugUsers = ""; // Delete after debugging
     if (rowsToDelete.has(user.id)) {
-      console.log("  User ID IS in the list, so needs to be removed"); // Delete after debugging
+      // console.log("  User ID IS in the list, so needs to be removed"); // Delete after debugging
       tempUsers.delete(user.id); // Remove user from set (not id property from user)
       for (const u of tempUsers) {
         debugUsers += u + " | ";
       } // Delete after debugging
-      console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
+      // console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
       setrowsToDelete(tempUsers);
     } else {
-      console.log("  User ID is NOT in the list yet, so needs to be added");
+      // console.log("  User ID is NOT in the list yet, so needs to be added");
       tempUsers.add(user.id); // Add user to set (not id property to user)
       for (const u of tempUsers) {
         debugUsers += u + " | ";
       } // Delete after debugging
-      console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
+      // console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
       setrowsToDelete(tempUsers);
     }
-    console.log("No. rows to be deleted: " + rowsToDelete.size);
-    console.log("Rows with Delete checkbox ticked: " + debugUsers); // Delete after debugging
-    tempUsers.size === 0
-      ? setDisableDeleteButton(true)
-      : setDisableDeleteButton(false);
+    // console.log("No. rows to be deleted: " + rowsToDelete.size);
+    // console.log("Rows with Delete checkbox ticked: " + debugUsers); // Delete after debugging
+    tempUsers.size === 0 ? setDisableDeleteButton(true) : setDisableDeleteButton(false);
   }
 
   async function handleClickDeleteUser() {
@@ -298,8 +311,8 @@ export default function AdminPanel(currentUser: any) {
       adminCredentials!
     );
 
-    console.log("User set before deletion:");
-    console.table(users);
+    // console.log("User set before deletion:");
+    // console.table(users);
     let usersCopy = [...users]; // Temporary local variable to shadow component state
     for (const deletedUserId of deleteUsersOutcome.usersDeleted) {
       usersCopy.splice(
@@ -307,11 +320,10 @@ export default function AdminPanel(currentUser: any) {
         1
       );
     }
-    console.log("Shadow user set after deletion:");
-    console.table(usersCopy);
+    // console.log("Shadow user set after deletion:");
+    // console.table(usersCopy);
     setUsers(usersCopy);
-    if (deleteUsersOutcome.details !== "")
-      console.log(deleteUsersOutcome.details);
+    // if (deleteUsersOutcome.details !== "") console.log(deleteUsersOutcome.details);
     reportStatus(deleteUsersOutcome.message);
 
     // Reset set of users deleted:
@@ -323,8 +335,13 @@ export default function AdminPanel(currentUser: any) {
   }
 
   function handleCancelClick(): void {
-    // throw new Error("Function not implemented.");
-    // For experimentation; remove when working
+    // console.log(`Cancel button clicked....`);
+    // console.log(`Latest value of 'users' before rollback:`);
+    // console.table(users);
+    // console.log(`Original users:`);
+    // console.table(originalUsers);
+    // setUsers(originalUsers);
+    setUsers(structuredClone(originalUsers));
   }
 
   const headings = ["First Name", "Last Name", "Email", "Delete?"];
@@ -337,9 +354,7 @@ export default function AdminPanel(currentUser: any) {
             <Header
               variant="h1"
               // description={t("translation_quick_text_description")}
-              description={
-                "Add, Edit, and Configure user accounts for Translate"
-              }
+              description={"Add, Edit, and Configure user accounts for Translate"}
             >
               Manage Users
             </Header>
@@ -350,12 +365,8 @@ export default function AdminPanel(currentUser: any) {
                 </Header>
               }
             >
-              {subscription?.subscriptionStatus === "Subscription valid" &&
-              !subscription?.isExpired
-                ? users.length +
-                  ` registered of ` +
-                  subscription?.userCount +
-                  ` available `
+              {subscription?.subscriptionStatus === "Subscription valid" && !subscription?.isExpired
+                ? users.length + ` registered of ` + subscription?.userCount + ` available `
                 : subscription?.subscriptionStatus}
             </Container>
           </SpaceBetween>

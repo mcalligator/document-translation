@@ -16,6 +16,7 @@ export interface UserData extends Record<string, any> {
   lastName: string;
   email: string;
   tenantId: string;
+  organisationName: string;
   isNew?: boolean;
   isValid?: boolean;
   isChanged?: boolean;

@@ -54,7 +54,7 @@ export default function filterUsers(
         lastName: lastName!.Value!,
         email: email!.Value!,
         tenantId: tenant!.Value!,
-        // organisationName: org!.Value!
+        organisationName: org!.Value!,
       });
     }
   });
