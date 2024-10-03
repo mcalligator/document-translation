@@ -11,7 +11,7 @@ import React, {
   useState,
 } from "react";
 
-import { UserData } from "./util/typeExtensions.js";
+import { listenerMouseEvent, UserData } from "./util/typeExtensions.js";
 
 import UserRow from "./userRow";
 
@@ -60,13 +60,12 @@ export default function UserTable({
   };
 
   const mouseMove = useCallback(
-    (e: Event) => {
-      // e actually of type MouseMove, but broader Event type required for adding / removing listeners
+    (e: listenerMouseEvent) => {
+      // e received actually of type MouseEvent, but extended Event type required for adding & removing listeners
       const gridColumns: string[] = columns.map((col: Header, i) => {
         if (i === activeIndex) {
-          const widthAdjustment = 54; // Attempt to work around strange jump in column width when changed
-          const width =
-            e.clientX - col.colRef.current!.offsetLeft - widthAdjustment;
+          const widthAdjustment = 100; // Attempt to work around strange jump in column width when changed
+          const width = e.clientX - col.colRef.current!.offsetLeft - widthAdjustment;
           // console.log(
           //   `    ClientX: ${e.clientX} | offsetLeft: ${col.colRef.current!.offsetLeft} | offsetWidth: ${col.colRef.current!.offsetWidth} | Width: ${width}`
           // );

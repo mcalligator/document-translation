@@ -31,6 +31,7 @@ export class dt_api extends Construct {
 	public readonly userPool: cognito.UserPool;
 	public readonly userPoolClient: cognito.UserPoolClient;
 	public readonly userPoolDomain: cognito.UserPoolDomain;
+	public readonly tenantAdminRole: iam.Role;
 
 	constructor(scope: Construct, id: string, props: props) {
 		super(scope, id);
@@ -88,7 +89,7 @@ export class dt_api extends Construct {
 		userInvitation = {
 			emailSubject: "Invitation to use City Trax Translate",
 			emailBody: `<p>This message has been sent to {username}.</p>
-				<p>Your administrator has invited you to use City Trax Translate.  The link to access it has been sent to you separately.</p>
+				<p>Your administrator has invited you to use City Trax Translate.  You will be separately notified of the link to access it.</p>
 				<p>Your temporary password is {####}.</p>
 				<p>Kind regards,</p>
 				<p>City Trax</p>`,
@@ -285,7 +286,7 @@ export class dt_api extends Construct {
 			},
 		};
 
-		const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
+		this.tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
 			assumedBy: new iam.FederatedPrincipal(
 				"cognito-identity.amazonaws.com",
 				assumeRoleConditions,
@@ -299,21 +300,28 @@ export class dt_api extends Construct {
 			"TenantAdminPermissions",
 			{
 				policyName: "Tenant-Admin-Permissions",
+				// Moving all cognito-idp actions into execution policy for Lambda function replacing this
 				statements: [
+					// new iam.PolicyStatement({
+					// 	// ASM-IAM
+					// 	effect: iam.Effect.ALLOW,
+					// 	actions: [
+					// 		"cognito-idp:ListUsers",
+					// 		"cognito-idp:AdminCreateUser",
+					// 		"cognito-idp:AdminAddUserToGroup",
+					// 		"cognito-idp:AdminRemoveUserFromGroup",
+					// 		"cognito-idp:AdminUpdateUserAttributes",
+					// 		"cognito-idp:AdminDisableUser",
+					// 		"cognito-idp:AdminEnableUser",
+					// 		"cognito-idp:AdminDeleteUser",
+					// 	],
+					// 	resources: [this.userPool.userPoolArn],
+					// }),
 					new iam.PolicyStatement({
-						// ASM-IAM
+						// Investigate possibility of scoping down to specific Lambda function
+						sid: "Allow invocation of User Management Lambda Function",
 						effect: iam.Effect.ALLOW,
-						actions: [
-							"cognito-idp:ListUsers",
-							"cognito-idp:AdminCreateUser",
-							"cognito-idp:AdminAddUserToGroup",
-							"cognito-idp:AdminRemoveUserFromGroup",
-							"cognito-idp:AdminUpdateUserAttributes",
-							"cognito-idp:AdminDisableUser",
-							"cognito-idp:AdminEnableUser",
-							"cognito-idp:AdminDeleteUser",
-						],
-						resources: [this.userPool.userPoolArn],
+						actions: ["lambda:InvokeFunction"],
 					}),
 				],
 			},
@@ -336,7 +344,7 @@ export class dt_api extends Construct {
 		// 	},
 		// );
 
-		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+		this.tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
 		// policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
 
 		// NagSuppressions.addResourceSuppressions(
@@ -355,17 +363,13 @@ export class dt_api extends Construct {
 		// );
 
 		// Cognito Group for TenantAdmins
-		const tenantAdminGroup = new cognito.CfnUserPoolGroup(
-			this,
-			"TenantAdminGroup",
-			{
-				userPoolId: this.userPool.userPoolId,
-				groupName: "TenantAdmins",
-				description: "For administering specific DocTran Tenant IDs",
-				precedence: 0,
-				roleArn: tenantAdminRole.roleArn,
-			},
-		);
+		new cognito.CfnUserPoolGroup(this, "TenantAdminGroup", {
+			userPoolId: this.userPool.userPoolId,
+			groupName: "TenantAdmins",
+			description: "For administering specific DocTran Tenant IDs",
+			precedence: 0,
+			roleArn: this.tenantAdminRole.roleArn,
+		});
 
 		if (!props.cognitoLocalUsers) {
 			NagSuppressions.addResourceSuppressions(
@@ -384,7 +388,7 @@ export class dt_api extends Construct {
 			);
 		} else {
 			NagSuppressions.addResourceSuppressions(
-				tenantAdminRole,
+				this.tenantAdminRole,
 				[
 					{
 						id: "AwsSolutions-IAM5",

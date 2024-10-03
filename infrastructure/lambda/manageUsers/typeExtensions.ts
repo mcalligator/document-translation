@@ -1,5 +1,11 @@
 import { AdminCreateUserRequest } from "@aws-sdk/client-cognito-identity-provider";
 
+export interface Event {
+  body: string;
+  userPoolId: string;
+  tenantId: string;
+}
+
 export interface Credentials {
   accessKeyId: string;
   secretAccessKey: string;
@@ -7,8 +13,7 @@ export interface Credentials {
   expiration?: string;
 }
 
-export interface AdminVerifiedCreateUserRequest
-  extends AdminCreateUserRequest {}
+export interface AdminVerifiedCreateUserRequest extends AdminCreateUserRequest {}
 
 export interface UserData extends Record<string, any> {
   id: string;
@@ -31,7 +36,7 @@ export interface CognitoUserData {
     {
       Name: string;
       Value: string;
-    },
+    }
   ];
 }
 
