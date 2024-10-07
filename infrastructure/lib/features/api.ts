@@ -8,6 +8,8 @@ import { NagSuppressions } from "cdk-nag";
 import {
 	aws_iam as iam,
 	aws_cognito as cognito,
+	aws_lambda as lambda,
+	aws_lambda_nodejs as nodejs,
 	aws_wafv2 as waf,
 	aws_appsync as appsync,
 } from "aws-cdk-lib";
@@ -31,7 +33,6 @@ export class dt_api extends Construct {
 	public readonly userPool: cognito.UserPool;
 	public readonly userPoolClient: cognito.UserPoolClient;
 	public readonly userPoolDomain: cognito.UserPoolDomain;
-	public readonly tenantAdminRole: iam.Role;
 
 	constructor(scope: Construct, id: string, props: props) {
 		super(scope, id);
@@ -286,7 +287,7 @@ export class dt_api extends Construct {
 			},
 		};
 
-		this.tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
+		const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
 			assumedBy: new iam.FederatedPrincipal(
 				"cognito-identity.amazonaws.com",
 				assumeRoleConditions,
@@ -295,80 +296,13 @@ export class dt_api extends Construct {
 			description: "Tenant Administration Role",
 		});
 
-		const policyPermitTenantAdmin = new iam.Policy(
-			this,
-			"TenantAdminPermissions",
-			{
-				policyName: "Tenant-Admin-Permissions",
-				// Moving all cognito-idp actions into execution policy for Lambda function replacing this
-				statements: [
-					// new iam.PolicyStatement({
-					// 	// ASM-IAM
-					// 	effect: iam.Effect.ALLOW,
-					// 	actions: [
-					// 		"cognito-idp:ListUsers",
-					// 		"cognito-idp:AdminCreateUser",
-					// 		"cognito-idp:AdminAddUserToGroup",
-					// 		"cognito-idp:AdminRemoveUserFromGroup",
-					// 		"cognito-idp:AdminUpdateUserAttributes",
-					// 		"cognito-idp:AdminDisableUser",
-					// 		"cognito-idp:AdminEnableUser",
-					// 		"cognito-idp:AdminDeleteUser",
-					// 	],
-					// 	resources: [this.userPool.userPoolArn],
-					// }),
-					new iam.PolicyStatement({
-						// Investigate possibility of scoping down to specific Lambda function
-						sid: "Allow invocation of User Management Lambda Function",
-						effect: iam.Effect.ALLOW,
-						actions: ["lambda:InvokeFunction"],
-					}),
-				],
-			},
-		);
-
-		// The following policy and its attachment is disabled, since the nag suppression is not working
-		// const policyPermitTenantAdminGetEntitlements = new iam.Policy(
-		// 	this,
-		// 	"TenantAdminPermissionsGetEntitlements",
-		// 	{
-		// 		policyName: "Tenant-Admin-Permissions-GetEntitlements",
-		// 		statements: [
-		// 			new iam.PolicyStatement({
-		// 				// ASM-IAM
-		// 				effect: iam.Effect.ALLOW,
-		// 				actions: ["aws-marketplace:GetEntitlements"],
-		// 				resources: ["*"],
-		// 			}),
-		// 		],
-		// 	},
-		// );
-
-		this.tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
-		// policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
-
-		// NagSuppressions.addResourceSuppressions(
-		// 	policyPermitTenantAdminGetEntitlements,
-		// 	[
-		// 		{
-		// 			id: "AwsSolutions-IAM5",
-		// 			reason: "Scoped to Cognito-specific group. Allow wildcard.",
-		// 			appliesTo: [
-		// 				"Action::aws-marketplace:GetEntitlements",
-		// 				"arn:aws:aws-marketplace:::*",
-		// 			],
-		// 		},
-		// 	],
-		// 	true,
-		// );
-
 		// Cognito Group for TenantAdmins
 		new cognito.CfnUserPoolGroup(this, "TenantAdminGroup", {
 			userPoolId: this.userPool.userPoolId,
 			groupName: "TenantAdmins",
 			description: "For administering specific DocTran Tenant IDs",
 			precedence: 0,
-			roleArn: this.tenantAdminRole.roleArn,
+			roleArn: tenantAdminRole.roleArn,
 		});
 
 		if (!props.cognitoLocalUsers) {
@@ -388,7 +322,7 @@ export class dt_api extends Construct {
 			);
 		} else {
 			NagSuppressions.addResourceSuppressions(
-				this.tenantAdminRole,
+				tenantAdminRole,
 				[
 					{
 						id: "AwsSolutions-IAM5",
@@ -423,6 +357,152 @@ export class dt_api extends Construct {
 				true,
 			);
 		}
+		//
+		// USER MANAGEMENT
+		//
+		const manageUsersLambdaRole = new iam.Role(this, "manageUsersLambdaRole", {
+			assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+			description: "Lambda execution role for user management",
+		});
+		// Using CDK NodejsFunction construct rather than dt_lambda to use addPermission method for resource-based policy
+		const manageUsersFunction = new nodejs.NodejsFunction(
+			this,
+			"manageUsersFunction",
+			{
+				description: "Manage Users in Cognito",
+				entry: "lambda/manageUsers/index.ts",
+				handler: "handler",
+				role: manageUsersLambdaRole,
+				environment: {
+					LOG_LEVEL: "info",
+				},
+				bundling: {
+					nodeModules: ["@aws-sdk/client-cognito-identity-provider"],
+				},
+				depsLockFilePath: "lambda/manageUsers/package-lock.json",
+				timeout: cdk.Duration.seconds(30),
+				architecture: lambda.Architecture.ARM_64,
+				runtime: lambda.Runtime.NODEJS_LATEST,
+			},
+		);
+		manageUsersFunction.addPermission("lambdaManageUsersPermission", {
+			principal: tenantAdminRole,
+			sourceArn: this.userPool.userPoolArn,
+		});
+
+		const policyPermitTenantAdmin = new iam.Policy(
+			this,
+			"TenantAdminPermissions",
+			{
+				policyName: "Tenant-Admin-Permissions",
+				// Moving all cognito-idp actions into execution policy for Lambda function replacing this
+				statements: [
+					// new iam.PolicyStatement({
+					// 	// ASM-IAM
+					// 	effect: iam.Effect.ALLOW,
+					// 	actions: [
+					// 		"cognito-idp:ListUsers",
+					// 		"cognito-idp:AdminCreateUser",
+					// 		"cognito-idp:AdminAddUserToGroup",
+					// 		"cognito-idp:AdminRemoveUserFromGroup",
+					// 		"cognito-idp:AdminUpdateUserAttributes",
+					// 		"cognito-idp:AdminDisableUser",
+					// 		"cognito-idp:AdminEnableUser",
+					// 		"cognito-idp:AdminDeleteUser",
+					// 	],
+					// 	resources: [this.userPool.userPoolArn],
+					// }),
+					new iam.PolicyStatement({
+						sid: "Allow invocation of User Management Lambda Function",
+						effect: iam.Effect.ALLOW,
+						actions: ["lambda:InvokeFunction"],
+						resources: [manageUsersFunction.functionArn],
+						// resources: [`arn:aws:lambda:${cdk.Stack.of(this).region}::*`],
+					}),
+				],
+			},
+		);
+
+		// The following policy and its attachment is disabled, since it is due for replacement by a Lambda function
+		// const policyPermitTenantAdminGetEntitlements = new iam.Policy(
+		// 	this,
+		// 	"TenantAdminPermissionsGetEntitlements",
+		// 	{
+		// 		policyName: "Tenant-Admin-Permissions-GetEntitlements",
+		// 		statements: [
+		// 			new iam.PolicyStatement({
+		// 				// ASM-IAM
+		// 				effect: iam.Effect.ALLOW,
+		// 				actions: ["aws-marketplace:GetEntitlements"],
+		// 				resources: ["*"],
+		// 			}),
+		// 		],
+		// 	},
+		// );
+
+		tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
+		// policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
+
+		// NagSuppressions.addResourceSuppressions(
+		// 	policyPermitTenantAdminGetEntitlements,
+		// 	[
+		// 		{
+		// 			id: "AwsSolutions-IAM5",
+		// 			reason: "Scoped to Cognito-specific group. Allow wildcard.",
+		// 			appliesTo: [
+		// 				"Action::aws-marketplace:GetEntitlements",
+		// 				"arn:aws:aws-marketplace:::*",
+		// 			],
+		// 		},
+		// 	],
+		// 	true,
+		// );
+
+		NagSuppressions.addResourceSuppressions(
+			manageUsersFunction,
+			[
+				{
+					id: "AwsSolutions-L1",
+					reason: "Configured runtime is in fact NODEJS_LATEST",
+				},
+			],
+			true,
+		);
+		manageUsersLambdaRole.addManagedPolicy(
+			iam.ManagedPolicy.fromAwsManagedPolicyName(
+				"service-role/AWSLambdaBasicExecutionRole",
+			),
+		);
+		manageUsersLambdaRole.attachInlinePolicy(
+			new iam.Policy(this, "manageUsersLambdaPolicy", {
+				statements: [
+					new iam.PolicyStatement({
+						actions: [
+							"cognito-idp:ListUsers",
+							"cognito-idp:AdminCreateUser",
+							"cognito-idp:AdminAddUserToGroup",
+							"cognito-idp:AdminRemoveUserFromGroup",
+							"cognito-idp:AdminUpdateUserAttributes",
+							"cognito-idp:AdminDisableUser",
+							"cognito-idp:AdminEnableUser",
+							"cognito-idp:AdminDeleteUser",
+						],
+						resources: [this.userPool.userPoolArn],
+					}),
+				],
+			}),
+		);
+		NagSuppressions.addResourceSuppressions(
+			manageUsersLambdaRole,
+			[
+				{
+					id: "AwsSolutions-IAM4",
+					reason:
+						"Lambda execution role requires logging permissions granted by relevant AWS managed policy",
+				},
+			],
+			true,
+		);
 
 		// GRAPHQL
 		// GRAPHQL | ROLE

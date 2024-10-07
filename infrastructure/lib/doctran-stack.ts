@@ -5,12 +5,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { NagSuppressions } from "cdk-nag";
 
-import {
-	aws_s3 as s3,
-	aws_iam as iam,
-	aws_lambda as lambda,
-	aws_lambda_nodejs as nodejs,
-} from "aws-cdk-lib";
+import { aws_s3 as s3 } from "aws-cdk-lib";
 
 import { dt_api } from "./features/api";
 import { dt_help } from "./features/help";
@@ -154,71 +149,6 @@ export class DocTranStack extends cdk.Stack {
 			this,
 			"awsAppsyncGraphqlEndpoint",
 			{ value: base_api.api.graphqlUrl },
-		);
-
-		//
-		// USER MANAGEMENT (Required feature)
-		//
-		const manageUsersLambdaRole = new iam.Role(this, "manageUsersLambdaRole", {
-			assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-			description: "Lambda execution role for user management",
-		});
-		// Using CDK NodejsFunction construct rather than dt_lambda for access to addPermission method for resource-based policy
-		const manageUsersFunction = new nodejs.NodejsFunction(
-			this,
-			"manageUsersFunction",
-			{
-				description: "Manage Users in Cognito",
-				entry: "lambda/manageUsers/index.ts",
-				handler: "handler",
-				role: manageUsersLambdaRole,
-				environment: {
-					LOG_LEVEL: "info",
-				},
-				bundling: {
-					nodeModules: ["@aws-sdk/client-cognito-identity-provider"],
-				},
-				timeout: cdk.Duration.seconds(30),
-				architecture: lambda.Architecture.ARM_64,
-				runtime: lambda.Runtime.NODEJS_LATEST,
-			},
-		);
-		manageUsersFunction.addPermission("lambdaManageUsersPermission", {
-			principal: base_api.tenantAdminRole,
-			sourceArn: base_api.userPool.userPoolArn,
-		});
-		manageUsersLambdaRole.addManagedPolicy(
-			iam.ManagedPolicy.fromAwsManagedPolicyName(
-				"service-role/AWSLambdaBasicExecutionRole",
-			),
-		);
-		manageUsersLambdaRole.attachInlinePolicy(
-			new iam.Policy(this, "manageUsersLambdaPolicy", {
-				statements: [
-					new iam.PolicyStatement({
-						actions: [
-							"cognito-idp:ListUsers",
-							"cognito-idp:AdminCreateUser",
-							"cognito-idp:AdminAddUserToGroup",
-							"cognito-idp:AdminRemoveUserFromGroup",
-							"cognito-idp:AdminUpdateUserAttributes",
-							"cognito-idp:AdminDisableUser",
-							"cognito-idp:AdminEnableUser",
-							"cognito-idp:AdminDeleteUser",
-						],
-						resources: [base_api.userPool.userPoolArn],
-					}),
-				],
-			}),
-		);
-		//
-		// OUTPUTS
-		this.awsLambdaUserManagementFunction = new cdk.CfnOutput(
-			this,
-			"awsLambdaUserManagementFunction",
-			{
-				value: manageUsersLambdaRole.roleArn,
-			},
 		);
 
 		//
