@@ -152,11 +152,6 @@ export class dt_api extends Construct {
 			},
 		});
 
-		/*
-		Properties added: signInAliases; signInCaseSensitive; required user attributes (firstName, lastName, and custom:tenantId); invitation email template; remember user device (optional);
-		Properties to be added: Cognito-assisted verification; and confirmation; verifying attribute changes; temporary password validity duration;
-		*/
-
 		// COGNITO | USERPOOL | ADVANCED SECURITY
 		const cfnUserPool = this.userPool.node.defaultChild as cognito.CfnUserPool;
 		cfnUserPool.userPoolAddOns = {
@@ -386,10 +381,6 @@ export class dt_api extends Construct {
 				runtime: lambda.Runtime.NODEJS_LATEST,
 			},
 		);
-		this.manageUsersFunction.addPermission("lambdaManageUsersPermission", {
-			principal: tenantAdminRole,
-			sourceArn: this.userPool.userPoolArn,
-		});
 
 		const policyPermitTenantAdmin = new iam.Policy(
 			this,
@@ -398,27 +389,11 @@ export class dt_api extends Construct {
 				policyName: "Tenant-Admin-Permissions",
 				// Moving all cognito-idp actions into execution policy for Lambda function replacing this
 				statements: [
-					// new iam.PolicyStatement({
-					// 	// ASM-IAM
-					// 	effect: iam.Effect.ALLOW,
-					// 	actions: [
-					// 		"cognito-idp:ListUsers",
-					// 		"cognito-idp:AdminCreateUser",
-					// 		"cognito-idp:AdminAddUserToGroup",
-					// 		"cognito-idp:AdminRemoveUserFromGroup",
-					// 		"cognito-idp:AdminUpdateUserAttributes",
-					// 		"cognito-idp:AdminDisableUser",
-					// 		"cognito-idp:AdminEnableUser",
-					// 		"cognito-idp:AdminDeleteUser",
-					// 	],
-					// 	resources: [this.userPool.userPoolArn],
-					// }),
 					new iam.PolicyStatement({
 						sid: "InvokeUserManagementLambdaFunction",
 						effect: iam.Effect.ALLOW,
 						actions: ["lambda:InvokeFunction"],
 						resources: [this.manageUsersFunction.functionArn],
-						// resources: [`arn:aws:lambda:${cdk.Stack.of(this).region}::*`],
 					}),
 				],
 			},

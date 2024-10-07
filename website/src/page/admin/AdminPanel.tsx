@@ -28,26 +28,17 @@ import {
 } from "./util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
-import filterUsers from "./filterUsers";
 import UserTable from "./userTable";
-
-import {
-  CognitoIdentityProviderClient,
-  ListUsersCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 
 export default function AdminPanel(currentUser: any) {
   /* To do:
     1. Check for expired AWS Session Token and refresh.
     2. Clear status message when condition no longer applies - DONE (I think).
-    3. Replace cognitoClient with shared component-level object.
-    4. Get user.id for newly-created user in UserRow to be from server, not stale local value - DONE
-    5. After deleting user, disable Delete User button - DONE.
-    6. Enable Cancel button functionality - IN PROGRESS
-    7. Get Input fields for new users to be same width as those above when data being entered.
-    8. Set initial text column widths to be that of longest content.
-    9. *** Add pagination to retrieving userse from Cognito - fast-follow.
-   10. Change input fields' colour to signify invalid entry.
+    3. Enable Cancel button functionality - DONE
+    4. Get Input fields for new users to be same width as those above when data being entered.
+    5. Set initial text column widths to be that of longest content.
+    6. *** Add pagination to retrieving users from Cognito - fast-follow.
+    7. Change input fields' colour to signify invalid entry.
   */
 
   const tenantId = extractField(currentUser, "custom:tenantId");
@@ -76,43 +67,21 @@ export default function AdminPanel(currentUser: any) {
       if (adminCredentials && !usersFetched) {
         // Only attempt if credentials defined & users not already fetched
         try {
-          // console.log(
-          //   `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-          // );
-          // const cognitoClient = new CognitoIdentityProviderClient({
-          //   region: cfnOutputs.awsRegion,
-          //   credentials: {
-          //     accessKeyId: adminCredentials!.accessKeyId,
-          //     secretAccessKey: adminCredentials!.secretAccessKey,
-          //     sessionToken: adminCredentials!.sessionToken,
-          //   },
-          // });
-
-          // List users
-          // const listUsersParams = {
-          //   UserPoolId: cfnOutputs.awsUserPoolsId,
-          //   Limit: 20,
-          // };
-          // const listUsersCommand = new ListUsersCommand(listUsersParams);
-          // const listUsersResponse = await cognitoClient.send(listUsersCommand);
-          // console.log(
-          //   `List users response:\n${JSON.stringify(listUsersResponse)}`
-          // );
-          // let retrievedUsers: UserData[] = [];
-          // if (listUsersResponse.Users!.length > 0) {
-          //   const retrievedUsers = filterUsers(listUsersResponse, tenantId);
           const retrievedUsers = await retrieveUsers(
-            cfnOutputs.manageUsersFunctionArn,
+            cfnOutputs.manageUsersFunctionName,
             adminCredentials!,
             cfnOutputs.awsUserPoolsId,
             tenantId
           );
           if (retrievedUsers.length > 0) {
+            console.log(`Users returned to fetchUsers in AdminPanel:`);
+            console.table(JSON.stringify(retrievedUsers));
             setUsers(retrievedUsers);
 
             const originalUsersLocal = structuredClone(retrievedUsers);
             setOriginalUsers(originalUsersLocal); // To enable changes to be reverted without saving
           } else {
+            console.log("No users returned");
             setUsers([]);
             setOriginalUsers([]);
           }
@@ -126,9 +95,6 @@ export default function AdminPanel(currentUser: any) {
       };
     };
     fetchUsers();
-    // console.log(
-    //   `adminCredentials after fetchCredentials and fetchUsers:\n${JSON.stringify(adminCredentials)}`
-    // );
   }, [adminCredentials]);
 
   useEffect(() => {
@@ -171,24 +137,14 @@ export default function AdminPanel(currentUser: any) {
     const usersLocal = [...users]; // Create copy, not reference, so React detects change and re-renders.
     let originalUsersLocal;
     if (originalUsers.length === 0) {
-      // i.e. first change since users state variable was last set
-      // console.log(`originalUsers is empty`);
-      // Create copy of both the array and the objects within:
       originalUsersLocal = usersLocal.map((user: UserData) => {
         return { ...user };
       });
-      // setOriginalUsers(originalUsersLocal);
-      // console.log(`handleClickAddUser - originalUsersLocal from usersLocal:`);
-      // console.table(originalUsersLocal);
     } else {
-      // console.log(`handleClickAddUser - originalUsers (2nd and later iterations):`);
-      // console.table(originalUsers);
       originalUsersLocal = originalUsers.map((user) => {
         return { ...user };
       });
     }
-    // console.log(`handleClickAddUser - usersLocal initially:`);
-    // console.table(usersLocal);
 
     const newId = new Date().toISOString(); // Dummy ID for uniquely identifying new user until persisted to Auth store
     let newUser: UserData = {
@@ -203,10 +159,7 @@ export default function AdminPanel(currentUser: any) {
       isValid: false,
     };
     usersLocal.push(newUser);
-    // console.log(`handleClickAddUser - usersLocal after new user added:`);
-    // console.table(usersLocal);
     setUsers(usersLocal);
-    // console.log(" After adding new blank user:" + JSON.stringify(usersLocal));
   }
 
   function updateUserSetWithChanges(changedUser: UserData): void {
@@ -217,35 +170,20 @@ export default function AdminPanel(currentUser: any) {
     let originalUsersLocal: UserData[];
 
     if (originalUsers.length === 0) {
-      // console.log(`originalUsers is empty`);
       // Create copy of both the array and the objects within:
       originalUsersLocal = usersLocal.map((user: UserData) => {
         return { ...user };
       });
-      // setOriginalUsers(originalUsersLocal);
-      // console.log(`updateUserSetWithChanges - originalUsersLocal from usersLocal:`);
-      // console.table(originalUsersLocal);
     } else {
-      // console.log(`updateUserSetWithChanges - originalUsers (2nd and later iterations):`);
-      // console.table(originalUsers);
       originalUsersLocal = originalUsers.map((user) => {
         return { ...user };
       });
     }
-    // console.log(`updateUserSetWithChanges - Current users:`);
-    // console.table(users);
-    // console.log(`updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`);
-    // console.table(usersLocal);
     try {
       const userIndex = usersLocal.findIndex(
         (user) => user.id === changedUser.id
       );
-      // console.log("Index of changed user: " + userIndex);
       Object.assign(usersLocal[userIndex], changedUser);
-      // console.log("Current user set:");
-      // console.table(usersLocal);
-      // console.log(`originalUsersLocal after updating usersLocal:`);
-      // console.table(originalUsersLocal);
       setUsers(usersLocal); // Update state with changed users
     } catch (error) {
       reportStatus("Error updating user");

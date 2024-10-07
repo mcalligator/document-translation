@@ -49,12 +49,12 @@ export const handler = async (event: Event, context: Context) => {
 			);
 			return {
 				statusCode: 200,
-				body: JSON.stringify(retrievedUsers),
+				body: retrievedUsers,
 			};
 		} else {
 			return {
 				statusCode: 200,
-				body: JSON.stringify([]),
+				body: [],
 			};
 		}
 	} catch (error) {

@@ -3,12 +3,11 @@ import { Credentials, UserData } from "./typeExtensions";
 import {
   InvokeCommand,
   InvokeCommandInput,
-  InvokeCommandOutput,
   LambdaClient,
 } from "@aws-sdk/client-lambda";
 
 export default async function retrieveUsers(
-  lambdaFunctionArn: string,
+  lambdaFunctionName: string,
   adminCredentials: Credentials,
   userPoolId: string,
   tenantId: string
@@ -22,7 +21,7 @@ export default async function retrieveUsers(
     },
   });
   const lambdaParams: InvokeCommandInput = {
-    FunctionName: lambdaFunctionArn,
+    FunctionName: lambdaFunctionName,
     InvocationType: "RequestResponse",
     Payload: JSON.stringify({
       tenantId: tenantId,
@@ -30,12 +29,15 @@ export default async function retrieveUsers(
     }),
   };
   try {
-    console.log(`Retrieving users for tenant ${tenantId}`);
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse = await lambdaClient.send(lambdaInvokeCommand);
-    const retrievedUsers: UserData[] = JSON.parse(
+    console.log(
+      `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
+    );
+    const responsePayload = JSON.parse(
       new TextDecoder().decode(lambdaInvokeResponse.Payload)
     );
+    const retrievedUsers: UserData[] = responsePayload.body;
 
     console.log(`Users retrieved:\n${JSON.stringify(retrievedUsers)}`);
 
