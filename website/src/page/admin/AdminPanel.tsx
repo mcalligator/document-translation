@@ -18,9 +18,14 @@ import {
 
 import { Entitlement, getEntitlement } from "./util/adminUtils";
 import deleteUsers from "./util/deleteUsers";
+import retrieveUsers from "./util/retrieveUsers";
 import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
-import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
+import {
+  Credentials,
+  DeleteUsersOutcome,
+  UserData,
+} from "./util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
 import filterUsers from "./filterUsers";
@@ -74,28 +79,35 @@ export default function AdminPanel(currentUser: any) {
           // console.log(
           //   `Applied value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
           // );
-          const cognitoClient = new CognitoIdentityProviderClient({
-            region: cfnOutputs.awsRegion,
-            credentials: {
-              accessKeyId: adminCredentials!.accessKeyId,
-              secretAccessKey: adminCredentials!.secretAccessKey,
-              sessionToken: adminCredentials!.sessionToken,
-            },
-          });
+          // const cognitoClient = new CognitoIdentityProviderClient({
+          //   region: cfnOutputs.awsRegion,
+          //   credentials: {
+          //     accessKeyId: adminCredentials!.accessKeyId,
+          //     secretAccessKey: adminCredentials!.secretAccessKey,
+          //     sessionToken: adminCredentials!.sessionToken,
+          //   },
+          // });
 
           // List users
-          const listUsersParams = {
-            UserPoolId: cfnOutputs.awsUserPoolsId,
-            Limit: 20,
-          };
-          const listUsersCommand = new ListUsersCommand(listUsersParams);
-          const listUsersResponse = await cognitoClient.send(listUsersCommand);
+          // const listUsersParams = {
+          //   UserPoolId: cfnOutputs.awsUserPoolsId,
+          //   Limit: 20,
+          // };
+          // const listUsersCommand = new ListUsersCommand(listUsersParams);
+          // const listUsersResponse = await cognitoClient.send(listUsersCommand);
           // console.log(
           //   `List users response:\n${JSON.stringify(listUsersResponse)}`
           // );
           // let retrievedUsers: UserData[] = [];
-          if (listUsersResponse.Users!.length > 0) {
-            const retrievedUsers = filterUsers(listUsersResponse, tenantId);
+          // if (listUsersResponse.Users!.length > 0) {
+          //   const retrievedUsers = filterUsers(listUsersResponse, tenantId);
+          const retrievedUsers = await retrieveUsers(
+            cfnOutputs.manageUsersFunctionArn,
+            adminCredentials!,
+            cfnOutputs.awsUserPoolsId,
+            tenantId
+          );
+          if (retrievedUsers.length > 0) {
             setUsers(retrievedUsers);
 
             const originalUsersLocal = structuredClone(retrievedUsers);
@@ -151,7 +163,9 @@ export default function AdminPanel(currentUser: any) {
 
   function handleClickAddUser() {
     if (users.length >= subscription!.userCount) {
-      reportStatus("No remaining entitlement - purchase additional subscription");
+      reportStatus(
+        "No remaining entitlement - purchase additional subscription"
+      );
       return;
     }
     const usersLocal = [...users]; // Create copy, not reference, so React detects change and re-renders.
@@ -223,7 +237,9 @@ export default function AdminPanel(currentUser: any) {
     // console.log(`updateUserSetWithChanges - Changed user: ${JSON.stringify(changedUser)}`);
     // console.table(usersLocal);
     try {
-      const userIndex = usersLocal.findIndex((user) => user.id === changedUser.id);
+      const userIndex = usersLocal.findIndex(
+        (user) => user.id === changedUser.id
+      );
       // console.log("Index of changed user: " + userIndex);
       Object.assign(usersLocal[userIndex], changedUser);
       // console.log("Current user set:");
@@ -247,7 +263,10 @@ export default function AdminPanel(currentUser: any) {
     // Code to move to saveChanges.tsx
     const newUsers = users.filter((user) => user.isNew);
     if (newUsers.length > 0) {
-      const saveNewUsersOutcome = await saveNewUsers(newUsers, adminCredentials!);
+      const saveNewUsersOutcome = await saveNewUsers(
+        newUsers,
+        adminCredentials!
+      );
       // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
       // if (saveNewUsersOutcome.details !== "") console.log(saveNewUsersOutcome.details);
 
@@ -255,7 +274,9 @@ export default function AdminPanel(currentUser: any) {
         // do only if new users
         setUsers((inMemoryUsers) =>
           inMemoryUsers.map((user) => {
-            const matchedNewUser = savedUsers.find((newUser) => newUser.email === user.email);
+            const matchedNewUser = savedUsers.find(
+              (newUser) => newUser.email === user.email
+            );
             // console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`);
             return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
           })
@@ -269,7 +290,10 @@ export default function AdminPanel(currentUser: any) {
 
     if (changedUsers.length > 0) {
       // console.log(`${changedUsers.length} users updated`);
-      const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
+      const saveChangedUsersOutcome = await saveChangedUsers(
+        changedUsers,
+        adminCredentials!
+      );
 
       // if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details);
       reportStatus(saveChangedUsersOutcome.message);
@@ -302,7 +326,9 @@ export default function AdminPanel(currentUser: any) {
     }
     // console.log("No. rows to be deleted: " + rowsToDelete.size);
     // console.log("Rows with Delete checkbox ticked: " + debugUsers); // Delete after debugging
-    tempUsers.size === 0 ? setDisableDeleteButton(true) : setDisableDeleteButton(false);
+    tempUsers.size === 0
+      ? setDisableDeleteButton(true)
+      : setDisableDeleteButton(false);
   }
 
   async function handleClickDeleteUser() {
@@ -354,7 +380,9 @@ export default function AdminPanel(currentUser: any) {
             <Header
               variant="h1"
               // description={t("translation_quick_text_description")}
-              description={"Add, Edit, and Configure user accounts for Translate"}
+              description={
+                "Add, Edit, and Configure user accounts for Translate"
+              }
             >
               Manage Users
             </Header>
@@ -365,8 +393,12 @@ export default function AdminPanel(currentUser: any) {
                 </Header>
               }
             >
-              {subscription?.subscriptionStatus === "Subscription valid" && !subscription?.isExpired
-                ? users.length + ` registered of ` + subscription?.userCount + ` available `
+              {subscription?.subscriptionStatus === "Subscription valid" &&
+              !subscription?.isExpired
+                ? users.length +
+                  ` registered of ` +
+                  subscription?.userCount +
+                  ` available `
                 : subscription?.subscriptionStatus}
             </Container>
           </SpaceBetween>

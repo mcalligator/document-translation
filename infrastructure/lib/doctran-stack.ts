@@ -42,6 +42,8 @@ export class DocTranStack extends cdk.Stack {
 	public readonly appWebsiteS3Bucket: cdk.CfnOutput;
 	public readonly appHostedUrl: cdk.CfnOutput;
 	public readonly appHostedUrlCloudFront: cdk.CfnOutput;
+	public readonly manageUsersFunctionArn: cdk.CfnOutput;
+
 	// OUTPUTS | SAML PROVIDER
 	public readonly samlIdentifier: cdk.CfnOutput;
 	public readonly samlReplyUrl: cdk.CfnOutput;
@@ -141,6 +143,13 @@ export class DocTranStack extends cdk.Stack {
 			this,
 			"awsCognitoIdentityPoolId",
 			{ value: base_api.identityPool.identityPoolId },
+		);
+		this.manageUsersFunctionArn = new cdk.CfnOutput(
+			this,
+			"manageUsersFunction",
+			{
+				value: base_api.manageUsersFunction.functionArn,
+			},
 		);
 		this.awsAppsyncId = new cdk.CfnOutput(this, "awsAppsyncId", {
 			value: base_api.api.apiId,

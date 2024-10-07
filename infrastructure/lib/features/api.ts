@@ -33,6 +33,7 @@ export class dt_api extends Construct {
 	public readonly userPool: cognito.UserPool;
 	public readonly userPoolClient: cognito.UserPoolClient;
 	public readonly userPoolDomain: cognito.UserPoolDomain;
+	public readonly manageUsersFunction: nodejs.NodejsFunction;
 
 	constructor(scope: Construct, id: string, props: props) {
 		super(scope, id);
@@ -365,7 +366,7 @@ export class dt_api extends Construct {
 			description: "Lambda execution role for user management",
 		});
 		// Using CDK NodejsFunction construct rather than dt_lambda to use addPermission method for resource-based policy
-		const manageUsersFunction = new nodejs.NodejsFunction(
+		this.manageUsersFunction = new nodejs.NodejsFunction(
 			this,
 			"manageUsersFunction",
 			{
@@ -385,7 +386,7 @@ export class dt_api extends Construct {
 				runtime: lambda.Runtime.NODEJS_LATEST,
 			},
 		);
-		manageUsersFunction.addPermission("lambdaManageUsersPermission", {
+		this.manageUsersFunction.addPermission("lambdaManageUsersPermission", {
 			principal: tenantAdminRole,
 			sourceArn: this.userPool.userPoolArn,
 		});
@@ -413,10 +414,10 @@ export class dt_api extends Construct {
 					// 	resources: [this.userPool.userPoolArn],
 					// }),
 					new iam.PolicyStatement({
-						sid: "Allow invocation of User Management Lambda Function",
+						sid: "InvokeUserManagementLambdaFunction",
 						effect: iam.Effect.ALLOW,
 						actions: ["lambda:InvokeFunction"],
-						resources: [manageUsersFunction.functionArn],
+						resources: [this.manageUsersFunction.functionArn],
 						// resources: [`arn:aws:lambda:${cdk.Stack.of(this).region}::*`],
 					}),
 				],
@@ -459,7 +460,7 @@ export class dt_api extends Construct {
 		// );
 
 		NagSuppressions.addResourceSuppressions(
-			manageUsersFunction,
+			this.manageUsersFunction,
 			[
 				{
 					id: "AwsSolutions-L1",
