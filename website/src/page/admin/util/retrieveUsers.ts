@@ -1,3 +1,5 @@
+import cfnOutputs from "../../../cfnOutputs.json";
+
 import { Credentials, UserData } from "./typeExtensions";
 
 import {
@@ -7,9 +9,7 @@ import {
 } from "@aws-sdk/client-lambda";
 
 export default async function retrieveUsers(
-  lambdaFunctionName: string,
   adminCredentials: Credentials,
-  userPoolId: string,
   tenantId: string
 ): Promise<UserData[]> {
   const lambdaClient = new LambdaClient({
@@ -20,12 +20,16 @@ export default async function retrieveUsers(
       sessionToken: adminCredentials!.sessionToken,
     },
   });
+  const lambdaFunctionName = cfnOutputs.manageUsersFunctionName;
+  const userPoolId = cfnOutputs.awsUserPoolsId;
+
   const lambdaParams: InvokeCommandInput = {
     FunctionName: lambdaFunctionName,
     InvocationType: "RequestResponse",
     Payload: JSON.stringify({
       tenantId: tenantId,
       userPoolId: userPoolId,
+      operation: "retrieve",
     }),
   };
   try {

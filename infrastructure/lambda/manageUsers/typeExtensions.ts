@@ -1,47 +1,28 @@
-import { AdminCreateUserRequest } from "@aws-sdk/client-cognito-identity-provider";
-
 export interface Event {
-  body: string;
-  userPoolId: string;
-  tenantId: string;
+	body: string | Array<string>;
+	userPoolId: string;
+	tenantId: string;
+	operation: string;
 }
 
-export interface Credentials {
-  accessKeyId: string;
-  secretAccessKey: string;
-  sessionToken: string;
-  expiration?: string;
-}
-
-export interface AdminVerifiedCreateUserRequest extends AdminCreateUserRequest {}
-
-export interface UserData extends Record<string, any> {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  tenantId: string;
-  organisationName: string;
-  isNew?: boolean;
-  isValid?: boolean;
-  isChanged?: boolean;
+export interface UserData {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	tenantId: string;
+	organisationName: string;
+	isNew?: boolean;
+	isValid?: boolean;
+	isChanged?: boolean;
 }
 
 export interface Id {
-  id: string;
-}
-
-export interface CognitoUserData {
-  Attributes: [
-    {
-      Name: string;
-      Value: string;
-    }
-  ];
+	id: string;
 }
 
 export interface DeleteUsersOutcome {
-  message: string;
-  details: string;
-  usersDeleted: Set<string>;
+	message: string;
+	details: string;
+	usersDeleted: Array<string>; // Array in back end (Set in front end)
 }

@@ -1,13 +1,9 @@
-import { AdminCreateUserRequest } from "@aws-sdk/client-cognito-identity-provider";
-
 export interface Credentials {
   accessKeyId: string;
   secretAccessKey: string;
   sessionToken: string;
   expiration?: string;
 }
-
-export interface AdminVerifiedCreateUserRequest extends AdminCreateUserRequest {}
 
 export interface UserData extends Record<string, any> {
   id: string;
@@ -21,23 +17,10 @@ export interface UserData extends Record<string, any> {
   isChanged?: boolean;
 }
 
-export interface Id {
-  id: string;
-}
-
-export interface CognitoUserData {
-  Attributes: [
-    {
-      Name: string;
-      Value: string;
-    },
-  ];
-}
-
 export interface DeleteUsersOutcome {
   message: string;
   details: string;
-  usersDeleted: Set<string>;
+  usersDeleted: Set<string>; // Set in front end (Array in back end)
 }
 
 // To address restrictions in both parent classes:

@@ -146,7 +146,7 @@ export class DocTranStack extends cdk.Stack {
 		);
 		this.manageUsersFunctionName = new cdk.CfnOutput(
 			this,
-			"manageUsersFunction",
+			"manageUsersFunctionName",
 			{
 				value: base_api.manageUsersFunction.functionName,
 			},

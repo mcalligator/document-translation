@@ -58,9 +58,6 @@ export default function AdminPanel(currentUser: any) {
     setAdminCredentials(extractField(currentUser, "credentials"));
 
     let usersFetched = false;
-    // console.log(
-    //   `Value of adminCredentials:\n${JSON.stringify(adminCredentials)}`
-    // );
 
     const fetchUsers = async () => {
       // Retrieve users from Cognito user pool
@@ -68,14 +65,12 @@ export default function AdminPanel(currentUser: any) {
         // Only attempt if credentials defined & users not already fetched
         try {
           const retrievedUsers = await retrieveUsers(
-            cfnOutputs.manageUsersFunctionName,
             adminCredentials!,
-            cfnOutputs.awsUserPoolsId,
             tenantId
           );
           if (retrievedUsers.length > 0) {
-            console.log(`Users returned to fetchUsers in AdminPanel:`);
-            console.table(JSON.stringify(retrievedUsers));
+            // console.log(`Users returned to fetchUsers in AdminPanel:`);
+            // console.table(retrievedUsers);
             setUsers(retrievedUsers);
 
             const originalUsersLocal = structuredClone(retrievedUsers);
@@ -239,72 +234,54 @@ export default function AdminPanel(currentUser: any) {
   }
 
   function deleteToggleChanges(user: UserData) {
-    // userRow's user variable not updated when new user added
     let tempUsers = rowsToDelete; // Local shadow variable for users to be deleted
-    // console.log("User passed in: " + user.id); // Delete after debugging
-    // Disable Delete User button only when NO checkboxes are ticked
-    // console.log("rowsSelectedForDeletion includes " + user.id + "? " + rowsToDelete.has(user.id));
-    let debugUsers = ""; // Delete after debugging
     if (rowsToDelete.has(user.id)) {
       // console.log("  User ID IS in the list, so needs to be removed"); // Delete after debugging
       tempUsers.delete(user.id); // Remove user from set (not id property from user)
-      for (const u of tempUsers) {
-        debugUsers += u + " | ";
-      } // Delete after debugging
-      // console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
       setrowsToDelete(tempUsers);
     } else {
-      // console.log("  User ID is NOT in the list yet, so needs to be added");
       tempUsers.add(user.id); // Add user to set (not id property to user)
-      for (const u of tempUsers) {
-        debugUsers += u + " | ";
-      } // Delete after debugging
-      // console.log(" Updated set of users to be deleted: " + debugUsers); // Delete after debugging
       setrowsToDelete(tempUsers);
     }
-    // console.log("No. rows to be deleted: " + rowsToDelete.size);
-    // console.log("Rows with Delete checkbox ticked: " + debugUsers); // Delete after debugging
     tempUsers.size === 0
       ? setDisableDeleteButton(true)
       : setDisableDeleteButton(false);
   }
 
   async function handleClickDeleteUser() {
-    const deleteUsersOutcome: DeleteUsersOutcome = await deleteUsers(
-      rowsToDelete,
-      adminCredentials!
-    );
-
-    // console.log("User set before deletion:");
-    // console.table(users);
-    let usersCopy = [...users]; // Temporary local variable to shadow component state
-    for (const deletedUserId of deleteUsersOutcome.usersDeleted) {
-      usersCopy.splice(
-        usersCopy.findIndex((user) => user.id === deletedUserId),
-        1
+    try {
+      const deleteUsersOutcome: DeleteUsersOutcome = await deleteUsers(
+        rowsToDelete,
+        adminCredentials!,
+        tenantId
       );
+      // console.log("User set before deletion:");
+      // console.table(users);
+      let usersCopy = [...users]; // Temporary local variable to shadow component state
+      for (const deletedUserId of deleteUsersOutcome.usersDeleted) {
+        usersCopy.splice(
+          usersCopy.findIndex((user) => {
+            return user.id === deletedUserId;
+          }),
+          1
+        );
+      }
+      // console.log("Shadow user set after deletion:");
+      // console.table(usersCopy);
+      setUsers(usersCopy);
+      // Reset set of users deleted:
+      let tempUsers = rowsToDelete;
+      tempUsers.clear();
+      // Post-deletion clean-up:
+      setrowsToDelete(tempUsers); // Clear state variable
+      setDisableDeleteButton(true);
+    } catch (error: any) {
+      console.error(JSON.stringify(error.message));
+      reportStatus(error.message);
     }
-    // console.log("Shadow user set after deletion:");
-    // console.table(usersCopy);
-    setUsers(usersCopy);
-    // if (deleteUsersOutcome.details !== "") console.log(deleteUsersOutcome.details);
-    reportStatus(deleteUsersOutcome.message);
-
-    // Reset set of users deleted:
-    let tempUsers = rowsToDelete;
-    tempUsers.clear();
-    // Post-deletion clean-up:
-    setrowsToDelete(tempUsers); // Clear state variable
-    setDisableDeleteButton(true);
   }
 
   function handleCancelClick(): void {
-    // console.log(`Cancel button clicked....`);
-    // console.log(`Latest value of 'users' before rollback:`);
-    // console.table(users);
-    // console.log(`Original users:`);
-    // console.table(originalUsers);
-    // setUsers(originalUsers);
     setUsers(structuredClone(originalUsers));
   }
 

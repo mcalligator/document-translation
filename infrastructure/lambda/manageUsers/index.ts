@@ -6,7 +6,6 @@
 // 5. Add logging - DEFERRED
 // 6. Return the required data from the function - DONE
 // 7. Add environment variables and event data to SAM local instance - DONE
-// 8. Introduce pagination
 
 import {
 	CognitoIdentityProviderClient,
@@ -14,22 +13,75 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { Context } from "aws-lambda";
 import filterUsers from "./filterUsers.js";
-import { Event, UserData } from "./typeExtensions.js";
+import { DeleteUsersOutcome, Event, UserData } from "./typeExtensions.js";
+import retrieveUsers from "./retrieveUsers.js";
+import deleteUsers from "./deleteUsers.js";
 
 export const handler = async (event: Event, context: Context) => {
 	console.log("Event: ", event);
 	console.log("Context: ", context);
 
-	try {
-		const cognitoClient = new CognitoIdentityProviderClient({
-			region: process.env.AWS_REGION!,
-			credentials: {
-				accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-				secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-				sessionToken: process.env.AWS_SESSION_TOKEN!,
-			},
-		});
+	const cognitoClient = new CognitoIdentityProviderClient({
+		region: process.env.AWS_REGION!,
+		credentials: {
+			accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+			sessionToken: process.env.AWS_SESSION_TOKEN!,
+		},
+	});
 
+	switch (event.operation) {
+		case "retrieve":
+			console.log("Retrieving users...");
+			try {
+				const retrievedUsers: UserData[] = await retrieveUsers(
+					event.userPoolId,
+					event.tenantId,
+				);
+				return {
+					statusCode: 200,
+					body: retrievedUsers,
+				};
+			} catch (error) {
+				console.error("Error fetching users:", error);
+				return {
+					statusCode: 500,
+					body: JSON.stringify({ message: "Error fetching users" }),
+				};
+			}
+		case "create":
+			console.log("Creating users...");
+			break;
+		case "update":
+			console.log("Updating users...");
+			break;
+		case "delete":
+			console.log(`Deleting users ${JSON.stringify(event.body)}`);
+			try {
+				const deleteUserResponse: DeleteUsersOutcome = await deleteUsers(
+					event.userPoolId,
+					new Set(event.body), // Convert back to Set for deletion handling
+				);
+				return {
+					statusCode: 200,
+					body: deleteUserResponse,
+				};
+			} catch (error) {
+				console.error(error);
+				return {
+					statusCode: 500,
+					body: error,
+				};
+			}
+			break;
+		default:
+			return {
+				statusCode: 405,
+				body: JSON.stringify({ message: "Invalid operation" }),
+			};
+	}
+
+	try {
 		// List users
 		const listUsersParams = {
 			region: process.env.AWS_REGION,
