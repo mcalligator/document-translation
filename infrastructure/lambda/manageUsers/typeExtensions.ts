@@ -1,5 +1,5 @@
 export interface Event {
-	body: string | Array<string>;
+	body: string;
 	userPoolId: string;
 	tenantId: string;
 	operation: string;

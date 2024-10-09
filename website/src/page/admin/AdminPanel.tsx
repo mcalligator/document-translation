@@ -17,6 +17,7 @@ import {
 } from "@cloudscape-design/components";
 
 import { Entitlement, getEntitlement } from "./util/adminUtils";
+import { ManageUsersError } from "./util/classes";
 import deleteUsers from "./util/deleteUsers";
 import retrieveUsers from "./util/retrieveUsers";
 import saveChangedUsers from "./util/saveChangedUsers";
@@ -130,16 +131,6 @@ export default function AdminPanel(currentUser: any) {
       return;
     }
     const usersLocal = [...users]; // Create copy, not reference, so React detects change and re-renders.
-    let originalUsersLocal;
-    if (originalUsers.length === 0) {
-      originalUsersLocal = usersLocal.map((user: UserData) => {
-        return { ...user };
-      });
-    } else {
-      originalUsersLocal = originalUsers.map((user) => {
-        return { ...user };
-      });
-    }
 
     const newId = new Date().toISOString(); // Dummy ID for uniquely identifying new user until persisted to Auth store
     let newUser: UserData = {
@@ -162,18 +153,6 @@ export default function AdminPanel(currentUser: any) {
       Updates the users state variable with the new values of the added / changed users
     */
     const usersLocal = [...users]; // Temporary working copy of users state array for manipulation
-    let originalUsersLocal: UserData[];
-
-    if (originalUsers.length === 0) {
-      // Create copy of both the array and the objects within:
-      originalUsersLocal = usersLocal.map((user: UserData) => {
-        return { ...user };
-      });
-    } else {
-      originalUsersLocal = originalUsers.map((user) => {
-        return { ...user };
-      });
-    }
     try {
       const userIndex = usersLocal.findIndex(
         (user) => user.id === changedUser.id
@@ -193,43 +172,88 @@ export default function AdminPanel(currentUser: any) {
   async function handleClickSaveChanges(e: Event) {
     // Write both new and changed users to back end
     e.preventDefault();
-    // Code to move to saveChanges.tsx
+    let saveChangesOutcome: string;
+    let successFlag = true;
     const newUsers = users.filter((user) => user.isNew);
     if (newUsers.length > 0) {
-      const saveNewUsersOutcome = await saveNewUsers(
-        newUsers,
-        adminCredentials!
-      );
-      // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
-      // if (saveNewUsersOutcome.details !== "") console.log(saveNewUsersOutcome.details);
-
-      const updateUsersWithNewIds = (savedUsers: UserData[]) => {
-        // do only if new users
-        setUsers((inMemoryUsers) =>
-          inMemoryUsers.map((user) => {
-            const matchedNewUser = savedUsers.find(
-              (newUser) => newUser.email === user.email
-            );
-            // console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`);
-            return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
-          })
+      try {
+        const saveNewUsersOutcome = await saveNewUsers(
+          tenantId,
+          newUsers,
+          adminCredentials!
         );
-      };
-      updateUsersWithNewIds(saveNewUsersOutcome.usersAdded);
-      reportStatus(saveNewUsersOutcome.message);
+
+        // Prepare to re-render new (and changed?) users:
+        // newUsers.length = 0; // Clear newUsers array now they are committed to the identity store (before deleting, check if 2 successive saves work OK)
+
+        // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
+        //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler (possible candidate for deletion)
+
+        if (saveNewUsersOutcome!.details !== "")
+          console.log(saveNewUsersOutcome!.details); // Delete after debugging
+        //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler
+
+        // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
+        const updateUsersWithNewIds = (savedUsers: UserData[]) => {
+          // do only if new users
+          setUsers((inMemoryUsers) =>
+            inMemoryUsers.map((user) => {
+              const matchedNewUser = savedUsers.find(
+                (newUser) => newUser.email === user.email
+              );
+              console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`); // Delete after debugging
+              return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
+            })
+          );
+        };
+        updateUsersWithNewIds(saveNewUsersOutcome!.usersAdded);
+        saveChangesOutcome = saveNewUsersOutcome!.message;
+        // reportStatus(saveNewUsersOutcome!.message);
+      } catch (error) {
+        successFlag = false;
+        if (error instanceof ManageUsersError) {
+          saveChangesOutcome = error.message;
+          console.error(`Error saving new users: ${error.details}`);
+        } else {
+          saveChangesOutcome = "Unknown error saving new users";
+          console.error("Error saving new users:", error);
+        }
+      }
     }
 
     const changedUsers = users.filter((user) => user.isChanged);
-
     if (changedUsers.length > 0) {
-      // console.log(`${changedUsers.length} users updated`);
-      const saveChangedUsersOutcome = await saveChangedUsers(
-        changedUsers,
-        adminCredentials!
-      );
+      try {
+        // console.log(`${changedUsers.length} users updated`);
+        const saveChangedUsersOutcome = await saveChangedUsers(
+          changedUsers,
+          adminCredentials!
+        );
 
-      // if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details);
-      reportStatus(saveChangedUsersOutcome.message);
+        // if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details);
+        reportStatus(saveChangedUsersOutcome.message);
+      } catch (error) {
+        successFlag = false;
+        if (error instanceof ManageUsersError) {
+          saveChangesOutcome = error.message;
+          console.error(`Error saving changed users: ${error.details}`);
+        } else {
+          saveChangesOutcome = "Unknown error saving changed users";
+          console.error("Error saving changed users:", error);
+        }
+      }
+    }
+
+    if (newUsers.length > 0 && changedUsers.length > 0) {
+      if (successFlag) {
+        reportStatus("Changes written successfully to the Identity Store");
+      } else {
+        reportStatus("Changes not written to the Identity Store");
+      }
+    } else if (newUsers.length > 0 && changedUsers.length === 0) {
+      reportStatus(saveChangesOutcome!);
+    } else if (newUsers.length === 0 && changedUsers.length > 0) {
+      reportStatus(saveChangesOutcome!);
     }
   }
 

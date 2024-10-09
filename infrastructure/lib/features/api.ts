@@ -369,6 +369,7 @@ export class dt_api extends Construct {
 				entry: "lambda/manageUsers/index.ts",
 				handler: "handler",
 				role: manageUsersLambdaRole,
+				memorySize: 128,
 				environment: {
 					LOG_LEVEL: "info",
 				},

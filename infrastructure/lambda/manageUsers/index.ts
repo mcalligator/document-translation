@@ -16,6 +16,8 @@ import filterUsers from "./filterUsers.js";
 import { DeleteUsersOutcome, Event, UserData } from "./typeExtensions.js";
 import retrieveUsers from "./retrieveUsers.js";
 import deleteUsers from "./deleteUsers.js";
+import createUsers from "./createUsers.js";
+import { ManageUsersError } from "./classes.js";
 
 export const handler = async (event: Event, context: Context) => {
 	console.log("Event: ", event);
@@ -51,7 +53,33 @@ export const handler = async (event: Event, context: Context) => {
 			}
 		case "create":
 			console.log("Creating users...");
-			break;
+			try {
+				const usersAdded: UserData[] = await createUsers(
+					event.userPoolId,
+					JSON.stringify(event.body),
+				);
+				return {
+					statusCode: 200,
+					body: usersAdded,
+				};
+			} catch (error: unknown) {
+				if (error instanceof ManageUsersError) {
+					console.error(`ManageUsersError: ${error.message}: ${error.details}`);
+					return {
+						statusCode: 422,
+						body: JSON.stringify({
+							message: error.message,
+							details: error.details,
+						}),
+					};
+				} else {
+					console.error(error);
+					return {
+						statusCode: 422,
+						body: JSON.stringify(error),
+					};
+				}
+			}
 		case "update":
 			console.log("Updating users...");
 			break;
@@ -73,7 +101,6 @@ export const handler = async (event: Event, context: Context) => {
 					body: error,
 				};
 			}
-			break;
 		default:
 			return {
 				statusCode: 405,
