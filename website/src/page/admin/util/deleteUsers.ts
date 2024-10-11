@@ -14,10 +14,7 @@ export default async function deleteUsers(
   adminCredentials: Credentials,
   tenantId: string
 ): Promise<DeleteUsersOutcome> {
-  console.log(
-    "Actual set of users to be deleted: " +
-      JSON.stringify(Array.from(rowsForDeletion))
-  ); // Delete after debugging
+  console.log("Actual set of users to be deleted: " + JSON.stringify(Array.from(rowsForDeletion))); // Delete after debugging
   let response = { message: "", details: "", usersDeleted: new Set<string>() };
 
   const lambdaFunctionName = cfnOutputs.manageUsersFunctionName;
@@ -45,29 +42,15 @@ export default async function deleteUsers(
 
   try {
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
-    const lambdaInvokeResponse: InvokeCommandOutput =
-      await lambdaClient.send(lambdaInvokeCommand);
-    const responsePayload = JSON.parse(
-      new TextDecoder().decode(lambdaInvokeResponse.Payload)
-    );
-    console.log(
-      `Lambda invocation response payload:\n${JSON.stringify(responsePayload)}`
-    );
+    const lambdaInvokeResponse: InvokeCommandOutput = await lambdaClient.send(lambdaInvokeCommand);
+    const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
+    console.log(`Lambda invocation response payload:\n${JSON.stringify(responsePayload)}`);
     const usersDeleted: Array<string> = responsePayload.body.usersDeleted;
     console.log(`Users deleted:\n${JSON.stringify(usersDeleted)}`);
 
-    response = responsePayload.body;
-    if (
-      responsePayload.body.details !== "" &&
-      responsePayload.body.message === ""
-    ) {
-      response.message = "Failed to delete users)";
-    } else {
-      response.message = responsePayload.body.message;
-    }
+    response.message = responsePayload.body.message;
     response.details = responsePayload.body.details;
-    response.usersDeleted = new Set(usersDeleted);
-
+    response.usersDeleted = new Set(usersDeleted); // Convert back to Set for processing
     return response;
   } catch (error) {
     console.error(JSON.stringify(error));

@@ -171,11 +171,11 @@ export default function AdminPanel(currentUser: any) {
         // Prepare to re-render new (and changed?) users:
         // newUsers.length = 0; // Clear newUsers array now they are committed to the identity store (before deleting, check if 2 successive saves work OK)
 
-        // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
-        //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler (possible candidate for deletion)
+        let usersCopy = [...users]; // Local variable to shadow state users array
+        // setUsers(usersCopy); // Update state so changes are reflected on the page
 
-        if (saveNewUsersOutcome!.details !== "") console.log(saveNewUsersOutcome!.details); // Delete after debugging
-        //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler
+        if (saveNewUsersOutcome!.details.length > 0) console.log(saveNewUsersOutcome!.details); // Delete after debugging
+        setUsers(usersCopy); // Update state so changes are reflected on the page
 
         // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
         const updateUsersWithNewIds = (savedUsers: UserData[]) => {

@@ -2,6 +2,7 @@ import {
   AdminCreateUserCommand,
   AdminCreateUserCommandInput,
   CognitoIdentityProviderClient,
+  UsernameExistsException,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { UserData } from "./typeExtensions.js";
 import { ManageUsersError } from "./classes.js";
@@ -70,12 +71,17 @@ export default async function createUsers(userPoolId: string, body: string): Pro
       console.log(`newUser (persisted ID): ${JSON.stringify(newUser)}`);
       usersAdded.push(tempUser!);
     } catch (error: unknown) {
-      responseMessage = `Unable to save changes to Identity Store`;
-      responseDetails += `Error adding user ${newUser.email}\n`;
-      if (error instanceof Error) {
-        console.error(`Error adding user ${newUser.email}: `, error.message);
+      if (error instanceof UsernameExistsException) {
+        responseMessage = `User ${newUser.email} already exists`;
+        console.log(responseMessage);
       } else {
-        console.error(`Error adding user ${newUser.email} - unknown error occurred`);
+        responseMessage = `Unable to save changes to Identity Store`;
+        responseDetails += `Error adding user ${newUser.email}\n`;
+        if (error instanceof Error) {
+          console.error(`Error adding user ${newUser.email}: `, error.message);
+        } else {
+          console.error(`Error adding user ${newUser.email} - unknown error occurred`);
+        }
       }
     }
 
