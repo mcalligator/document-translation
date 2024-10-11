@@ -18,8 +18,6 @@ export default async function deleteUsers(
     "Actual set of users to be deleted: " +
       JSON.stringify(Array.from(rowsForDeletion))
   ); // Delete after debugging
-  let responseMessage = "";
-  let responseDetails = "";
   let response = { message: "", details: "", usersDeleted: new Set<string>() };
 
   const lambdaFunctionName = cfnOutputs.manageUsersFunctionName;
@@ -49,19 +47,25 @@ export default async function deleteUsers(
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse: InvokeCommandOutput =
       await lambdaClient.send(lambdaInvokeCommand);
-    console.log(
-      `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
-    );
     const responsePayload = JSON.parse(
       new TextDecoder().decode(lambdaInvokeResponse.Payload)
+    );
+    console.log(
+      `Lambda invocation response payload:\n${JSON.stringify(responsePayload)}`
     );
     const usersDeleted: Array<string> = responsePayload.body.usersDeleted;
     console.log(`Users deleted:\n${JSON.stringify(usersDeleted)}`);
 
     response = responsePayload.body;
-    if (responsePayload.body.details !== "")
-      responseMessage = "Failed to delete users)";
-    response.details = responseDetails;
+    if (
+      responsePayload.body.details !== "" &&
+      responsePayload.body.message === ""
+    ) {
+      response.message = "Failed to delete users)";
+    } else {
+      response.message = responsePayload.body.message;
+    }
+    response.details = responsePayload.body.details;
     response.usersDeleted = new Set(usersDeleted);
 
     return response;

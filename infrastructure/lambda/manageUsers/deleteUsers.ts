@@ -57,7 +57,12 @@ export default async function deleteUsers(
 		}
 	}
 	if (usersDeleted.size === rowsForDeletion.size) {
-		responseMessage = "All users successfully deleted";
+		if (usersDeleted.size > 1) {
+			responseMessage = "All users";
+		} else {
+			responseMessage = "User";
+		}
+		responseMessage += " successfully deleted";
 	} else {
 		response.message = responseMessage;
 		response.details = responseDetails;

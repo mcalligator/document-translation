@@ -2,6 +2,7 @@
   plugins: ["@trivago/prettier-plugin-sort-imports"],
   arrowParens: "always",
   bracketSpacing: true,
+  printWidth: 100,
   endOfLine: "lf",
   semi: true,
   useTabs: false,

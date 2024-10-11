@@ -72,23 +72,11 @@ export default function UserRow({
     // console.log("handleBlur - user: " + JSON.stringify(userDetails));
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
     const fieldName = e.target.name;
-    // console.log(
-    //   "Leaving " +
-    //     fieldName +
-    //     " with latest user details: " +
-    //     JSON.stringify(userDetails[fieldName])
-    // );
     reportStatus(""); // Clear any existing status message
     const result = validateChanges(fieldName, e.target.value);
     if (result === true) {
       userCopy.isValid = true;
       setFieldValidity(true);
-      // console.log(
-      //   "handleBlur - value of " +
-      //     fieldName +
-      //     " for following user is valid: " +
-      //     JSON.stringify(userCopy)
-      // );
       setUserDetails(userCopy);
       // console.log(" handleBlur - updated user: " + JSON.stringify(userDetails));
       updateUserSetWithChanges(userCopy); // Not sure this is ideal: updates users array (and hence re-renders) every time focus leaves any field in any userRow
@@ -96,9 +84,8 @@ export default function UserRow({
     } else {
       reportStatus(result); // Notify user of invalid entry
       setFieldValidity(false);
+
       // To do: Change field's background colour to light red indicating it is invalid
-      // e.target.focus();
-      // e.target.select();
     }
   }
 

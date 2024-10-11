@@ -22,11 +22,7 @@ import deleteUsers from "./util/deleteUsers";
 import retrieveUsers from "./util/retrieveUsers";
 import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
-import {
-  Credentials,
-  DeleteUsersOutcome,
-  UserData,
-} from "./util/typeExtensions";
+import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
 
 import { extractField } from "./checkAdmin";
 import UserTable from "./userTable";
@@ -65,10 +61,7 @@ export default function AdminPanel(currentUser: any) {
       if (adminCredentials && !usersFetched) {
         // Only attempt if credentials defined & users not already fetched
         try {
-          const retrievedUsers = await retrieveUsers(
-            adminCredentials!,
-            tenantId
-          );
+          const retrievedUsers = await retrieveUsers(adminCredentials!, tenantId);
           if (retrievedUsers.length > 0) {
             // console.log(`Users returned to fetchUsers in AdminPanel:`);
             // console.table(retrievedUsers);
@@ -125,9 +118,7 @@ export default function AdminPanel(currentUser: any) {
 
   function handleClickAddUser() {
     if (users.length >= subscription!.userCount) {
-      reportStatus(
-        "No remaining entitlement - purchase additional subscription"
-      );
+      reportStatus("No remaining entitlement - purchase additional subscription");
       return;
     }
     const usersLocal = [...users]; // Create copy, not reference, so React detects change and re-renders.
@@ -154,9 +145,7 @@ export default function AdminPanel(currentUser: any) {
     */
     const usersLocal = [...users]; // Temporary working copy of users state array for manipulation
     try {
-      const userIndex = usersLocal.findIndex(
-        (user) => user.id === changedUser.id
-      );
+      const userIndex = usersLocal.findIndex((user) => user.id === changedUser.id);
       Object.assign(usersLocal[userIndex], changedUser);
       setUsers(usersLocal); // Update state with changed users
     } catch (error) {
@@ -172,16 +161,12 @@ export default function AdminPanel(currentUser: any) {
   async function handleClickSaveChanges(e: Event) {
     // Write both new and changed users to back end
     e.preventDefault();
-    let saveChangesOutcome: string;
+    let saveChangesOutcome = "";
     let successFlag = true;
-    const newUsers = users.filter((user) => user.isNew);
+    const newUsers = users.filter((user) => user.isNew && user.isValid);
     if (newUsers.length > 0) {
       try {
-        const saveNewUsersOutcome = await saveNewUsers(
-          tenantId,
-          newUsers,
-          adminCredentials!
-        );
+        const saveNewUsersOutcome = await saveNewUsers(tenantId, newUsers, adminCredentials!);
 
         // Prepare to re-render new (and changed?) users:
         // newUsers.length = 0; // Clear newUsers array now they are committed to the identity store (before deleting, check if 2 successive saves work OK)
@@ -189,8 +174,7 @@ export default function AdminPanel(currentUser: any) {
         // let usersCopy = [...users]; // Local variable to shadow state users array  // Keep in handler function
         //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler (possible candidate for deletion)
 
-        if (saveNewUsersOutcome!.details !== "")
-          console.log(saveNewUsersOutcome!.details); // Delete after debugging
+        if (saveNewUsersOutcome!.details !== "") console.log(saveNewUsersOutcome!.details); // Delete after debugging
         //   setUsers(usersCopy); // Update state so changes are reflected on the page  // Ensure this runs in handler
 
         // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
@@ -198,9 +182,7 @@ export default function AdminPanel(currentUser: any) {
           // do only if new users
           setUsers((inMemoryUsers) =>
             inMemoryUsers.map((user) => {
-              const matchedNewUser = savedUsers.find(
-                (newUser) => newUser.email === user.email
-              );
+              const matchedNewUser = savedUsers.find((newUser) => newUser.email === user.email);
               console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`); // Delete after debugging
               return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
             })
@@ -213,25 +195,22 @@ export default function AdminPanel(currentUser: any) {
         successFlag = false;
         if (error instanceof ManageUsersError) {
           saveChangesOutcome = error.message;
-          console.error(`Error saving new users: ${error.details}`);
+          console.error(`Error saving new users ${error.message}: ${error.details}`);
         } else {
           saveChangesOutcome = "Unknown error saving new users";
-          console.error("Error saving new users:", error);
+          console.error("Error saving new users:", JSON.stringify(error));
         }
       }
     }
 
-    const changedUsers = users.filter((user) => user.isChanged);
+    const changedUsers = users.filter((user) => user.isChanged && user.isValid);
     if (changedUsers.length > 0) {
       try {
         // console.log(`${changedUsers.length} users updated`);
-        const saveChangedUsersOutcome = await saveChangedUsers(
-          changedUsers,
-          adminCredentials!
-        );
-
-        // if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details);
-        reportStatus(saveChangedUsersOutcome.message);
+        const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
+        saveChangesOutcome = saveChangedUsersOutcome.message;
+        if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details); // <-- Delete after debugging
+        // reportStatus(saveChangedUsersOutcome.message); // <-- now redundant because of code handling both create and update users
       } catch (error) {
         successFlag = false;
         if (error instanceof ManageUsersError) {
@@ -239,21 +218,22 @@ export default function AdminPanel(currentUser: any) {
           console.error(`Error saving changed users: ${error.details}`);
         } else {
           saveChangesOutcome = "Unknown error saving changed users";
-          console.error("Error saving changed users:", error);
+          console.error("Error saving changed users:", JSON.stringify(error));
         }
       }
     }
 
+    // Display operation-specific outcomes:
     if (newUsers.length > 0 && changedUsers.length > 0) {
       if (successFlag) {
         reportStatus("Changes written successfully to the Identity Store");
       } else {
-        reportStatus("Changes not written to the Identity Store");
+        reportStatus(saveChangesOutcome);
       }
     } else if (newUsers.length > 0 && changedUsers.length === 0) {
-      reportStatus(saveChangesOutcome!);
+      reportStatus(saveChangesOutcome);
     } else if (newUsers.length === 0 && changedUsers.length > 0) {
-      reportStatus(saveChangesOutcome!);
+      reportStatus(saveChangesOutcome);
     }
   }
 
@@ -267,9 +247,7 @@ export default function AdminPanel(currentUser: any) {
       tempUsers.add(user.id); // Add user to set (not id property to user)
       setrowsToDelete(tempUsers);
     }
-    tempUsers.size === 0
-      ? setDisableDeleteButton(true)
-      : setDisableDeleteButton(false);
+    tempUsers.size === 0 ? setDisableDeleteButton(true) : setDisableDeleteButton(false);
   }
 
   async function handleClickDeleteUser() {
@@ -319,9 +297,7 @@ export default function AdminPanel(currentUser: any) {
             <Header
               variant="h1"
               // description={t("translation_quick_text_description")}
-              description={
-                "Add, Edit, and Configure user accounts for Translate"
-              }
+              description={"Add, Edit, and Configure user accounts for Translate"}
             >
               Manage Users
             </Header>
@@ -332,12 +308,8 @@ export default function AdminPanel(currentUser: any) {
                 </Header>
               }
             >
-              {subscription?.subscriptionStatus === "Subscription valid" &&
-              !subscription?.isExpired
-                ? users.length +
-                  ` registered of ` +
-                  subscription?.userCount +
-                  ` available `
+              {subscription?.subscriptionStatus === "Subscription valid" && !subscription?.isExpired
+                ? users.length + ` registered of ` + subscription?.userCount + ` available `
                 : subscription?.subscriptionStatus}
             </Container>
           </SpaceBetween>
