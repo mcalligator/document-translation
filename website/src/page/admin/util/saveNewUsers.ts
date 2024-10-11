@@ -35,34 +35,34 @@ export default async function saveNewUsers(
   });
 
   if (newUsers.length > 0) {
-    // Leave this check in the front end
     const lambdaParams: InvokeCommandInput = {
       FunctionName: lambdaFunctionName,
       InvocationType: "RequestResponse",
-      Payload: JSON.stringify({
-        tenantId: tenantId,
-        userPoolId: userPoolId,
-        operation: "create",
-        body: newUsers,
-      }),
+      Payload: new TextEncoder().encode(
+        JSON.stringify({
+          tenantId: tenantId,
+          userPoolId: userPoolId,
+          operation: "create",
+          body: newUsers,
+        })
+      ),
     };
 
     try {
       const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
       const lambdaInvokeResponse: InvokeCommandOutput =
         await lambdaClient.send(lambdaInvokeCommand);
-      console.log(
-        `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
-      );
-      const responsePayload = JSON.parse(
-        new TextDecoder().decode(lambdaInvokeResponse.Payload) // Might need to omit Payload
-      );
+      const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
+      console.log(`Lambda invocation response payload:\n${JSON.stringify(responsePayload)}`);
       switch (responsePayload.statusCode) {
         case 200:
-          response.message = "New users created successfully";
-          response.usersAdded = responsePayload.body.usersAdded;
+          responsePayload.body.length > 1
+            ? (response.message = "Users")
+            : (response.message = "User");
+          response.message += " successfully created";
+          response.usersAdded = responsePayload.body;
           console.log(`Users added:\n`);
-          console.table(usersAdded);
+          console.table(response.usersAdded);
           return response;
         case 403:
           throw new ManageUsersError(
@@ -70,10 +70,7 @@ export default async function saveNewUsers(
             "No users created"
           );
         case 422:
-          throw new ManageUsersError(
-            responsePayload.body.message,
-            responsePayload.body.details
-          );
+          throw new ManageUsersError(responsePayload.body.message, responsePayload.body.details);
         default:
           throw new ManageUsersError(
             "Failed to create users for reasons unknown",
@@ -81,8 +78,13 @@ export default async function saveNewUsers(
           );
       }
     } catch (error) {
-      console.error(JSON.stringify(error));
-      throw error;
+      if (error instanceof ManageUsersError) {
+        console.log(`${error.message}: ${error.details}`);
+        throw error;
+      } else {
+        console.error(JSON.stringify(error));
+        throw error;
+      }
     }
   }
 }

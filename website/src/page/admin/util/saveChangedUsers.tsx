@@ -1,12 +1,14 @@
 import cfnOutputs from "../../../cfnOutputs.json";
 
+import { ManageUsersError } from "./classes";
 import { Credentials, UserData } from "./typeExtensions";
 
 import {
-  AdminUpdateUserAttributesCommand,
-  AdminUpdateUserAttributesCommandInput,
-  CognitoIdentityProviderClient,
-} from "@aws-sdk/client-cognito-identity-provider";
+  InvokeCommand,
+  InvokeCommandInput,
+  InvokeCommandOutput,
+  LambdaClient,
+} from "@aws-sdk/client-lambda";
 
 export default async function saveChangedUsers(
   changedUsers: UserData[],
@@ -20,40 +22,57 @@ export default async function saveChangedUsers(
     details: "",
     usersUpdated: new Array<UserData>(),
   };
-  const cognitoClient = new CognitoIdentityProviderClient({
+  const lambdaFunctionName = cfnOutputs.manageUsersFunctionName;
+  const userPoolId = cfnOutputs.awsUserPoolsId;
+
+  const lambdaClient = new LambdaClient({
     region: cfnOutputs.awsRegion,
     credentials: {
-      accessKeyId: adminCredentials.accessKeyId,
-      secretAccessKey: adminCredentials.secretAccessKey,
-      sessionToken: adminCredentials.sessionToken,
+      accessKeyId: adminCredentials!.accessKeyId,
+      secretAccessKey: adminCredentials!.secretAccessKey,
+      sessionToken: adminCredentials!.sessionToken,
     },
   });
-  for (const changedUser of changedUsers) {
-    try {
-      const updateUsersParams: AdminUpdateUserAttributesCommandInput = {
-        UserPoolId: cfnOutputs.awsUserPoolsId,
-        Username: changedUser.id,
-        UserAttributes: [
-          { Name: "given_name", Value: changedUser.firstName },
-          { Name: "family_name", Value: changedUser.lastName },
-          { Name: "email", Value: changedUser.email },
-        ],
-      };
-      const command = new AdminUpdateUserAttributesCommand(updateUsersParams);
-      await cognitoClient.send(command); // Successful response is blank, so no need to capture it
-      changedUser.isChanged = false;
-      console.log(`User updated: ${JSON.stringify(changedUser)}`);
-      usersUpdated.push(changedUser);
-    } catch (error) {
-      responseMessage = `Unable to save changes to Identity Store`;
-      responseDetails += `Error updating user ${changedUser.id}\n`;
-      console.error(`Error updating user ${changedUser.id}: `, error);
+
+  const lambdaParams: InvokeCommandInput = {
+    FunctionName: lambdaFunctionName,
+    InvocationType: "RequestResponse",
+    Payload: new TextEncoder().encode(
+      JSON.stringify({
+        userPoolId: userPoolId,
+        operation: "create",
+        body: changedUsers,
+      })
+    ),
+  };
+  try {
+    const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
+    const lambdaInvokeResponse: InvokeCommandOutput = await lambdaClient.send(lambdaInvokeCommand);
+    const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
+    console.log(`Lambda invocation response payload:\n${responsePayload}`);
+    switch (responsePayload.statusCode) {
+      case 200:
+        usersUpdated.length > 1 ? (response.message = "Users") : (response.message = "User");
+        response.message += " successfully updated";
+        response.usersUpdated = responsePayload.body;
+        console.log(`Users added:\n`);
+        console.table(usersUpdated);
+        return response;
+      case 403:
+        throw new ManageUsersError("Insufficient permissions to update users", "No users updated");
+      case 422:
+        throw new ManageUsersError(responsePayload.body.message, responsePayload.body.details);
+      default:
+        throw new ManageUsersError(
+          "Failed to update users for reasons unknown",
+          "No users updated"
+        );
+    }
+  } catch (error: unknown) {
+    if (error instanceof ManageUsersError) {
+      throw new ManageUsersError(error.message, error.details);
+    } else {
+      throw new Error(JSON.stringify(error));
     }
   }
-  if (response.message === "" && usersUpdated.length > 0)
-    responseMessage = "Changes saved successfully";
-  response.message = responseMessage;
-  response.details = responseDetails;
-  response.usersUpdated = usersUpdated;
-  return response;
 }

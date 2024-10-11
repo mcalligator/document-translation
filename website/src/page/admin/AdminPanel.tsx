@@ -270,6 +270,7 @@ export default function AdminPanel(currentUser: any) {
       }
       // console.log("Shadow user set after deletion:");
       // console.table(usersCopy);
+      reportStatus(deleteUsersOutcome.message);
       setUsers(usersCopy);
       // Reset set of users deleted:
       let tempUsers = rowsToDelete;
