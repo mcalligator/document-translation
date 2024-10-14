@@ -53,13 +53,15 @@ export default async function saveNewUsers(
       const lambdaInvokeResponse: InvokeCommandOutput =
         await lambdaClient.send(lambdaInvokeCommand);
       const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
-      console.log(`Lambda invocation response payload:\n${JSON.stringify(responsePayload)}`);
+      console.log(
+        `Lambda invocation response payload in saveNewUsers:\n${JSON.stringify(responsePayload)}`
+      );
       switch (responsePayload.statusCode) {
         case 200:
           responsePayload.body.length > 1
             ? (response.message = "Users")
             : (response.message = "User");
-          response.message += " successfully created";
+          response.message += " successfully added";
           response.usersAdded = responsePayload.body;
           console.log(`Users added:\n`);
           console.table(response.usersAdded);
@@ -70,8 +72,14 @@ export default async function saveNewUsers(
             "No users created"
           );
         case 422:
-          throw new ManageUsersError(responsePayload.body.message, responsePayload.body.details);
+          response.message = JSON.parse(responsePayload.body).message;
+          response.details = JSON.parse(responsePayload.body).details;
+          console.error(`Error logged in saveNewUsers(): ${response.message} ${response.details}`);
+          throw new ManageUsersError(response.message, response.details);
         default:
+          console.log(
+            `Status Code ${responsePayload.statusCode}: failed to create users for reasons unknown`
+          );
           throw new ManageUsersError(
             "Failed to create users for reasons unknown",
             "No users created"
@@ -82,7 +90,7 @@ export default async function saveNewUsers(
         console.log(`${error.message}: ${error.details}`);
         throw error;
       } else {
-        console.error(JSON.stringify(error));
+        console.error(`Unknown error in saveNewUsers(): ${JSON.stringify(error)}`);
         throw error;
       }
     }

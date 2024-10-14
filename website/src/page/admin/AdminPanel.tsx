@@ -163,6 +163,7 @@ export default function AdminPanel(currentUser: any) {
     e.preventDefault();
     let saveChangesOutcome = "";
     let successFlag = true;
+    let usersCopy = [...users]; // Local variable to shadow state users array
     const newUsers = users.filter((user) => user.isNew && user.isValid);
     if (newUsers.length > 0) {
       try {
@@ -171,11 +172,7 @@ export default function AdminPanel(currentUser: any) {
         // Prepare to re-render new (and changed?) users:
         // newUsers.length = 0; // Clear newUsers array now they are committed to the identity store (before deleting, check if 2 successive saves work OK)
 
-        let usersCopy = [...users]; // Local variable to shadow state users array
-        // setUsers(usersCopy); // Update state so changes are reflected on the page
-
         if (saveNewUsersOutcome!.details.length > 0) console.log(saveNewUsersOutcome!.details); // Delete after debugging
-        setUsers(usersCopy); // Update state so changes are reflected on the page
 
         // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
         const updateUsersWithNewIds = (savedUsers: UserData[]) => {
@@ -190,7 +187,6 @@ export default function AdminPanel(currentUser: any) {
         };
         updateUsersWithNewIds(saveNewUsersOutcome!.usersAdded);
         saveChangesOutcome = saveNewUsersOutcome!.message;
-        // reportStatus(saveNewUsersOutcome!.message);
       } catch (error) {
         successFlag = false;
         if (error instanceof ManageUsersError) {
@@ -208,9 +204,9 @@ export default function AdminPanel(currentUser: any) {
       try {
         // console.log(`${changedUsers.length} users updated`);
         const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
-        saveChangesOutcome = saveChangedUsersOutcome.message;
+        if (saveChangesOutcome.length > 0) saveChangesOutcome += "; "; // To concatenate outcomes from both operations
+        saveChangesOutcome += saveChangedUsersOutcome.message;
         if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details); // <-- Delete after debugging
-        // reportStatus(saveChangedUsersOutcome.message); // <-- now redundant because of code handling both create and update users
       } catch (error) {
         successFlag = false;
         if (error instanceof ManageUsersError) {
@@ -235,6 +231,9 @@ export default function AdminPanel(currentUser: any) {
     } else if (newUsers.length === 0 && changedUsers.length > 0) {
       reportStatus(saveChangesOutcome);
     }
+    console.log(`Current user set before setUsers():`);
+    console.table(usersCopy);
+    setUsers(usersCopy); // Update state so changes are reflected on the page
   }
 
   function deleteToggleChanges(user: UserData) {

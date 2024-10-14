@@ -18,12 +18,7 @@ export default async function deleteUsers(userPoolId: string, rowsForDeletion: S
     usersDeleted: new Array<string>(), // Captured in array for serialisation by Lambda runtime without data loss
   };
   const cognitoClient = new CognitoIdentityProviderClient({
-    region: process.env.AWS_REGION!,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      sessionToken: process.env.AWS_SESSION_TOKEN!,
-    },
+    region: process.env.AWS_REGION,
   });
 
   for (const userId of rowsForDeletion) {

@@ -40,7 +40,7 @@ export default async function saveChangedUsers(
     Payload: new TextEncoder().encode(
       JSON.stringify({
         userPoolId: userPoolId,
-        operation: "create",
+        operation: "update",
         body: changedUsers,
       })
     ),
@@ -49,13 +49,15 @@ export default async function saveChangedUsers(
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse: InvokeCommandOutput = await lambdaClient.send(lambdaInvokeCommand);
     const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
-    console.log(`Lambda invocation response payload:\n${responsePayload}`);
+    console.log(
+      `Lambda invocation response payload in saveChangedUsers:\n${JSON.stringify(responsePayload)}`
+    );
     switch (responsePayload.statusCode) {
       case 200:
         usersUpdated.length > 1 ? (response.message = "Users") : (response.message = "User");
         response.message += " successfully updated";
         response.usersUpdated = responsePayload.body;
-        console.log(`Users added:\n`);
+        console.log(`Users updated:\n`);
         console.table(usersUpdated);
         return response;
       case 403:

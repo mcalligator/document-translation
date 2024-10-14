@@ -1,20 +1,15 @@
+import { UserData } from "./typeExtensions.js";
+import { ManageUsersError } from "./classes.js";
 import {
   AdminCreateUserCommand,
   AdminCreateUserCommandInput,
   CognitoIdentityProviderClient,
   UsernameExistsException,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { UserData } from "./typeExtensions.js";
-import { ManageUsersError } from "./classes.js";
 
 export default async function createUsers(userPoolId: string, body: string): Promise<UserData[]> {
   const cognitoClient = new CognitoIdentityProviderClient({
     region: process.env.AWS_REGION,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      sessionToken: process.env.AWS_SESSION_TOKEN!,
-    },
   });
   let responseMessage = "";
   let responseDetails = "";
@@ -37,10 +32,13 @@ export default async function createUsers(userPoolId: string, body: string): Pro
     }
   }
 
-  const usersAdded = new Array<UserData>(); // Arry of users successfully created in Cognito
+  const usersAdded = new Array<UserData>(); // Array of users created in Cognito
 
   for (const newUser of newUsers) {
     try {
+      if (!newUser.id || !newUser.firstName || !newUser.lastName || !newUser.email) {
+        throw new ManageUsersError("Unable to create users", "Missing required fields");
+      }
       const createUserParams: AdminCreateUserCommandInput = {
         UserPoolId: userPoolId,
         DesiredDeliveryMediums: ["EMAIL"],
@@ -83,6 +81,7 @@ export default async function createUsers(userPoolId: string, body: string): Pro
           console.error(`Error adding user ${newUser.email} - unknown error occurred`);
         }
       }
+      throw new ManageUsersError(responseMessage, responseDetails);
     }
 
     console.log("saveChanges: value of users");
