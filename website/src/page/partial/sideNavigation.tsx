@@ -7,16 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { SideNavigation } from "@cloudscape-design/components";
 
 import { CreateJob as ReadableCreateJob } from "../../util/readableCreateJob";
-
-import checkAdmin from "../admin/checkAdmin";
-
-import { title } from "process";
+import { checkAdmin } from "../admin/util/adminUtils";
 
 const features = require("../../features.json");
 
 export default function Navigation(user: any) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  // console.log(`User passed into SideNavigation: ${JSON.stringify(user)}`);
 
   const userIsAdmin: boolean = checkAdmin(user)!;
 

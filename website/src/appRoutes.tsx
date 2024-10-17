@@ -3,10 +3,10 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
+import { checkAdmin } from "./page/admin/util/adminUtils";
 import SignOut from "./util/signOut";
 
 import AdminPanel from "./page/admin/AdminPanel";
-import checkAdmin from "./page/admin/checkAdmin";
 import Help from "./page/help/help";
 import ReadableHistory from "./page/readable/history";
 import ReadablePrint from "./page/readable/print";
@@ -18,6 +18,8 @@ import TranslationQuick from "./page/translation/quick";
 const features = require("./features.json");
 
 export default function AppRoutes(currentUser: any) {
+  // console.log("currentUser passed in to AppRoutes: ", JSON.stringify(currentUser));
+
   const userIsAdmin: boolean = checkAdmin(currentUser)!;
 
   return (
@@ -26,10 +28,7 @@ export default function AppRoutes(currentUser: any) {
         <>
           <Route path="/" element={<TranslationHistory />} />
           <Route path="/translation/" element={<TranslationHistory />} />
-          <Route
-            path="/translation/history/"
-            element={<TranslationHistory />}
-          />
+          <Route path="/translation/history/" element={<TranslationHistory />} />
           <Route path="/translation/new/" element={<TranslationNew />} />
           <Route path="/translation/quick/" element={<TranslationQuick />} />
         </>
@@ -45,12 +44,7 @@ export default function AppRoutes(currentUser: any) {
           <Route path="/readable/print/*" element={<ReadablePrint />} />
         </>
       )}
-      {userIsAdmin && (
-        <Route
-          path="/admin/"
-          element={<AdminPanel currentUser={currentUser} />}
-        />
-      )}
+      {userIsAdmin && <Route path="/admin/" element={<AdminPanel currentUser={currentUser} />} />}
       <Route path="/help/" element={<Help />} />
       <Route path="/signout/" element={<SignOut />} />
     </Routes>

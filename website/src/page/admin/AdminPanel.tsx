@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
-import cfnOutputs from "../../cfnOutputs.json";
-
 import React, { useEffect, useState } from "react";
 
 import {
@@ -17,6 +15,7 @@ import {
 } from "@cloudscape-design/components";
 
 import { Entitlement, getEntitlement } from "./util/adminUtils";
+import { extractField } from "./util/adminUtils";
 import { ManageUsersError } from "./util/classes";
 import deleteUsers from "./util/deleteUsers";
 import retrieveUsers from "./util/retrieveUsers";
@@ -24,7 +23,6 @@ import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
 import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
 
-import { extractField } from "./checkAdmin";
 import UserTable from "./userTable";
 
 export default function AdminPanel(currentUser: any) {
