@@ -5,13 +5,14 @@ import React, { ChangeEvent, useEffect, useState } from "react";
 
 import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
-import { UserData } from "./util/typeExtensions";
+import { ColumnDefinition, UserData } from "./util/typeExtensions";
 
 interface UserRowProps {
   user: UserData;
   updateUserSetWithChanges: Function;
   deleteToggleChanges: Function;
   reportStatus: Function;
+  columns: ColumnDefinition[];
 }
 
 export default function UserRow({
@@ -19,6 +20,7 @@ export default function UserRow({
   updateUserSetWithChanges,
   deleteToggleChanges,
   reportStatus,
+  columns,
 }: UserRowProps) {
   const [userDetails, setUserDetails] = useState<UserData>(user);
   const [deleteChecked, setDeleteChecked] = useState(false); // Local state for Delete User tickbox
@@ -119,6 +121,7 @@ export default function UserRow({
         <input
           name="firstName"
           type="text"
+          size={columns[0].minWidth / 8} // replace this by calculating longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.firstName}
@@ -130,6 +133,7 @@ export default function UserRow({
         <input
           name="lastName"
           type="text"
+          size={columns[1].minWidth / 8} // replace this by calculating longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.lastName}
@@ -141,6 +145,7 @@ export default function UserRow({
         <input
           name="email"
           type="email"
+          size={columns[2].minWidth / 8} // replace this by calculating longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           placeholder="user@domain"

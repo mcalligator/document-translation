@@ -5,6 +5,10 @@ export interface Credentials {
   expiration?: string;
 }
 
+export interface ColumnDefinition {
+  title: string;
+  minWidth: number;
+}
 export interface UserData extends Record<string, any> {
   id: string;
   firstName: string;
@@ -24,4 +28,4 @@ export interface DeleteUsersOutcome {
 }
 
 // To address restrictions in both parent classes:
-export interface listenerMouseEvent extends Event, MouseEvent {}
+export interface ListenerMouseEvent extends Event, MouseEvent {}

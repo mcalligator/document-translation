@@ -285,7 +285,12 @@ export default function AdminPanel(currentUser: any) {
     setUsers(structuredClone(originalUsers));
   }
 
-  const headings = ["First Name", "Last Name", "Email", "Delete?"];
+  const columns = [
+    { title: "First Name", minWidth: 85 },
+    { title: "Last Name", minWidth: 85 },
+    { title: "Email", minWidth: 235 },
+    { title: "Delete?", minWidth: 10 },
+  ];
 
   return (
     <>
@@ -317,8 +322,7 @@ export default function AdminPanel(currentUser: any) {
           <Form>
             <SpaceBetween direction="vertical" size="m">
               <UserTable
-                headings={headings}
-                minCellWidth={100}
+                columnDefinitions={columns}
                 users={users}
                 updateUserSetWithChanges={updateUserSetWithChanges} // Callback function to surface changes for write
                 deleteToggleChanges={deleteToggleChanges}

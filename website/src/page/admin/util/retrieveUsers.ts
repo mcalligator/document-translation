@@ -2,11 +2,7 @@ import cfnOutputs from "../../../cfnOutputs.json";
 
 import { Credentials, UserData } from "./typeExtensions";
 
-import {
-  InvokeCommand,
-  InvokeCommandInput,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+import { InvokeCommand, InvokeCommandInput, LambdaClient } from "@aws-sdk/client-lambda";
 
 export default async function retrieveUsers(
   adminCredentials: Credentials,
@@ -35,15 +31,13 @@ export default async function retrieveUsers(
   try {
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse = await lambdaClient.send(lambdaInvokeCommand);
-    console.log(
-      `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
-    );
-    const responsePayload = JSON.parse(
-      new TextDecoder().decode(lambdaInvokeResponse.Payload)
-    );
+    // console.log(
+    //   `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
+    // );
+    const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
     const retrievedUsers: UserData[] = responsePayload.body;
 
-    console.log(`Users retrieved:\n${JSON.stringify(retrievedUsers)}`);
+    // console.log(`Users retrieved:\n${JSON.stringify(retrievedUsers)}`);
 
     return retrievedUsers;
   } catch (error) {

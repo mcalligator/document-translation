@@ -1,23 +1,14 @@
 import "./adminStyles.css";
 import "@cloudscape-design/global-styles/index.css";
 
-import React, {
-  MouseEvent,
-  MouseEventHandler,
-  RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { MouseEvent, RefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import { listenerMouseEvent, UserData } from "./util/typeExtensions.js";
+import { ColumnDefinition, ListenerMouseEvent, UserData } from "./util/typeExtensions.js";
 
 import UserRow from "./userRow";
 
 interface UserTableProps {
-  headings: string[];
-  minCellWidth: number;
+  columnDefinitions: ColumnDefinition[];
   users: UserData[];
   updateUserSetWithChanges: Function;
   deleteToggleChanges: Function;
@@ -25,8 +16,7 @@ interface UserTableProps {
 }
 
 export default function UserTable({
-  headings,
-  minCellWidth,
+  columnDefinitions,
   users,
   updateUserSetWithChanges,
   deleteToggleChanges,
@@ -36,19 +26,26 @@ export default function UserTable({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const tableElement = useRef<HTMLTableElement>(null);
 
-  interface Header {
+  interface HeadingDetails {
     text: string;
+    minWidth: number;
     colRef: RefObject<HTMLTableCellElement>;
   }
 
-  const createHeaders = (headers: string[]): Header[] => {
-    return headers.map((item) => ({
-      text: item,
+  const createHeadingRefs = (headings: ColumnDefinition[]): HeadingDetails[] => {
+    return headings.map((heading) => ({
+      text: heading.title,
+      minWidth: heading.minWidth,
       colRef: useRef<HTMLTableCellElement>(null),
     }));
   };
 
-  const columns = createHeaders(headings);
+  const columnSet = createHeadingRefs(columnDefinitions);
+  // for (const col of columns) {
+  //   console.log(`Column ${col.text} has width ${col.columnWidth}`);
+  // }
+
+  // console.table(users);
 
   useEffect(() => {
     setTableHeight(tableElement!.current!.offsetHeight);
@@ -59,18 +56,23 @@ export default function UserTable({
     removeListeners();
   };
 
+  // The mouseMove listener is only active AFTER the mouseDown event; it is removed with mouseUp.
   const mouseMove = useCallback(
-    (e: listenerMouseEvent) => {
+    (e: ListenerMouseEvent) => {
       // e received actually of type MouseEvent, but extended Event type required for adding & removing listeners
-      const gridColumns: string[] = columns.map((col: Header, i) => {
+      const gridColumns: string[] = columnSet.map((col: HeadingDetails, i) => {
         if (i === activeIndex) {
-          const widthAdjustment = 100; // Attempt to work around strange jump in column width when changed
-          const width = e.clientX - col.colRef.current!.offsetLeft - widthAdjustment;
-          // console.log(
-          //   `    ClientX: ${e.clientX} | offsetLeft: ${col.colRef.current!.offsetLeft} | offsetWidth: ${col.colRef.current!.offsetWidth} | Width: ${width}`
-          // );
-          if (width >= minCellWidth) {
-            return `${width}px`;
+          const currentWidth = col.colRef.current!.offsetWidth;
+          const absLeft = e.clientX - currentWidth;
+          const newWidth = currentWidth + e.movementX;
+          console.log(
+            `    ClientX: ${e.clientX} | offsetWidth: ${col.colRef.current!.offsetWidth} | absLeft: ${absLeft} | movementX: ${e.movementX} | newWidth: ${newWidth}`
+          );
+          if (newWidth >= col.minWidth) {
+            console.log(` --- Column width set to ${newWidth}`);
+            return `${newWidth}px`;
+          } else {
+            console.log(`*** Mininum column width of ${col.minWidth} reached ***`);
           }
         }
         return `${col.colRef.current!.offsetWidth}px`;
@@ -78,9 +80,8 @@ export default function UserTable({
       const columnDefs = `${gridColumns.join(" ")}`;
       console.log(`Column Widths: ${columnDefs}`);
       tableElement!.current!.style.gridTemplateColumns = columnDefs;
-      // tableElement!.current!.style.gridTemplateColumns = `${gridColumns.join(" ")}`;
     },
-    [activeIndex, columns, minCellWidth]
+    [activeIndex, columnSet]
   );
 
   const removeListeners = useCallback(() => {
@@ -109,7 +110,7 @@ export default function UserTable({
       <table ref={tableElement} className="admin">
         <thead>
           <tr>
-            {columns.map(({ colRef: ref, text }, i) => (
+            {columnSet.map(({ colRef: ref, text }, i) => (
               <th ref={ref} key={text}>
                 <span>{text}</span>
                 <div
@@ -124,17 +125,18 @@ export default function UserTable({
           </tr>
         </thead>
         <tbody>
-          {users.map((user: UserData, index: number) => {
+          {users.map((user: UserData) => {
             // console.log(
             //   "User: " + user.firstName + " ID: " + user.id + " Index: " + index
             // );
             return (
-              <tr key={index}>
+              <tr key={user.id}>
                 <UserRow
                   user={user}
                   updateUserSetWithChanges={updateUserSetWithChanges}
                   deleteToggleChanges={deleteToggleChanges}
                   reportStatus={reportStatus}
+                  columns={columnDefinitions}
                 />
               </tr>
             );
