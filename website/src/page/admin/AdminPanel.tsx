@@ -28,12 +28,9 @@ import UserTable from "./userTable";
 export default function AdminPanel(currentUser: any) {
   /* To do:
     1. Check for expired AWS Session Token and refresh.
-    2. Clear status message when condition no longer applies - DONE (I think).
-    3. Enable Cancel button functionality - DONE
-    4. Get Input fields for new users to be same width as those above when data being entered.
-    5. Set initial text column widths to be that of longest content.
-    6. *** Add pagination to retrieving users from Cognito - fast-follow.
-    7. Change input fields' colour to signify invalid entry.
+    2. Get Input fields for new users to be same width as those above when data being entered.
+    3. *** Add pagination to retrieving users from Cognito - fast-follow.
+    4. Change input fields' colour to signify invalid entry.
   */
 
   const tenantId = extractField(currentUser, "custom:tenantId");
@@ -66,7 +63,7 @@ export default function AdminPanel(currentUser: any) {
             setUsers(retrievedUsers);
 
             const originalUsersLocal = structuredClone(retrievedUsers);
-            setOriginalUsers(originalUsersLocal); // To enable changes to be reverted without saving
+            setOriginalUsers(originalUsersLocal); // To enable changes to be reverted before saving
           } else {
             console.log("No users returned");
             setUsers([]);
@@ -160,78 +157,116 @@ export default function AdminPanel(currentUser: any) {
     // Write both new and changed users to back end
     e.preventDefault();
     let saveChangesOutcome = "";
-    let successFlag = true;
     let usersCopy = [...users]; // Local variable to shadow state users array
-    const newUsers = users.filter((user) => user.isNew && user.isValid);
-    if (newUsers.length > 0) {
-      try {
-        const saveNewUsersOutcome = await saveNewUsers(tenantId, newUsers, adminCredentials!);
+    const newUsers = users.filter((user) => user.isNew && user.isValid); // New array of users newly-created locally
+    const changedUsers = users.filter((user) => user.isChanged && user.isValid); // New array of users changed locally
+    try {
+      if (newUsers.length > 0) {
+        try {
+          const saveNewUsersOutcome = await saveNewUsers(tenantId, newUsers, adminCredentials!);
+          if (saveNewUsersOutcome!.details.length > 0) console.error(saveNewUsersOutcome!.details); // Delete after debugging
+          // Update usersCopy with results of saveNewUsersOutcome.usersAdded:
+          if (saveNewUsersOutcome!.usersAdded.length > 0) {
+            // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
+            const updateUsersWithSavedState = (savedUsers: UserData[]) => {
+              usersCopy.forEach((user, index) => {
+                const matchedNewUser = savedUsers.find((newUser) => newUser.email === user.email);
+                if (matchedNewUser) {
+                  usersCopy[index] = {
+                    ...user,
+                    id: matchedNewUser.id,
+                    isNew: matchedNewUser.isNew,
+                  };
+                }
+              });
+            };
+            updateUsersWithSavedState(saveNewUsersOutcome!.usersAdded);
+          }
 
-        // Prepare to re-render new (and changed?) users:
-        // newUsers.length = 0; // Clear newUsers array now they are committed to the identity store (before deleting, check if 2 successive saves work OK)
-
-        if (saveNewUsersOutcome!.details.length > 0) console.log(saveNewUsersOutcome!.details); // Delete after debugging
-
-        // Replace temporary timestamp-based Ids of new users with those assigned by identity store:
-        const updateUsersWithNewIds = (savedUsers: UserData[]) => {
-          // do only if new users
-          setUsers((inMemoryUsers) =>
-            inMemoryUsers.map((user) => {
-              const matchedNewUser = savedUsers.find((newUser) => newUser.email === user.email);
-              console.log(`matchedNewUser: ${JSON.stringify(matchedNewUser)}`); // Delete after debugging
-              return matchedNewUser ? { ...user, id: matchedNewUser.id } : user;
-            })
-          );
-        };
-        updateUsersWithNewIds(saveNewUsersOutcome!.usersAdded);
-        saveChangesOutcome = saveNewUsersOutcome!.message;
-      } catch (error) {
-        successFlag = false;
-        if (error instanceof ManageUsersError) {
-          saveChangesOutcome = error.message;
-          console.error(`Error saving new users ${error.message}: ${error.details}`);
-        } else {
-          saveChangesOutcome = "Unknown error saving new users";
-          console.error("Error saving new users:", JSON.stringify(error));
+          saveChangesOutcome = saveNewUsersOutcome!.message;
+        } catch (error) {
+          if (error instanceof ManageUsersError) {
+            saveChangesOutcome = error.message;
+            console.error(`Error saving new users: ${error.message}: ${error.details}`);
+          } else {
+            saveChangesOutcome = "Unknown error saving new users";
+            console.error("Error saving new users:", JSON.stringify(error));
+          }
+          throw error;
         }
       }
-    }
 
-    const changedUsers = users.filter((user) => user.isChanged && user.isValid);
-    if (changedUsers.length > 0) {
-      try {
-        // console.log(`${changedUsers.length} users updated`);
-        const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
-        if (saveChangesOutcome.length > 0) saveChangesOutcome += "; "; // To concatenate outcomes from both operations
-        saveChangesOutcome += saveChangedUsersOutcome.message;
-        if (saveChangedUsersOutcome.details !== "") console.log(saveChangedUsersOutcome.details); // <-- Delete after debugging
-      } catch (error) {
-        successFlag = false;
-        if (error instanceof ManageUsersError) {
-          saveChangesOutcome = error.message;
-          console.error(`Error saving changed users: ${error.details}`);
-        } else {
-          saveChangesOutcome = "Unknown error saving changed users";
-          console.error("Error saving changed users:", JSON.stringify(error));
+      if (changedUsers.length > 0) {
+        try {
+          // console.log(`${changedUsers.length} users updated`);
+          const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
+          if (saveChangesOutcome.length > 0) saveChangesOutcome += "; "; // To concatenate outcomes from both operations
+          saveChangesOutcome += saveChangedUsersOutcome.message;
+          if (saveChangedUsersOutcome.details.length > 0)
+            console.error(saveChangedUsersOutcome.details); // <-- Delete after debugging
+          if (saveChangedUsersOutcome.usersUpdated.length > 0) {
+            const updateUsersWithSavedState = (savedUsers: UserData[]) => {
+              usersCopy.forEach((user, index) => {
+                const matchedChangedUser = savedUsers.find(
+                  (changedUser) => changedUser.id === user.id
+                );
+                if (matchedChangedUser) {
+                  usersCopy[index] = {
+                    ...user,
+                    isChanged: matchedChangedUser.isChanged,
+                  };
+                }
+              });
+            };
+            updateUsersWithSavedState(saveChangedUsersOutcome.usersUpdated);
+          }
+        } catch (error) {
+          if (error instanceof ManageUsersError) {
+            saveChangesOutcome = error.message;
+            console.error(`Error saving changed users: ${error.details}`);
+          } else {
+            saveChangesOutcome = "Unknown error saving changed users";
+            console.error("Error saving changed users:", JSON.stringify(error));
+          }
+          throw error;
         }
       }
-    }
-
-    // Display operation-specific outcomes:
-    if (newUsers.length > 0 && changedUsers.length > 0) {
-      if (successFlag) {
+      // Display operation-specific outcomes:
+      if (newUsers.length > 0 && changedUsers.length > 0) {
+        setUsers(usersCopy);
+        setOriginalUsers(structuredClone(usersCopy)); // Now that changes successfully applied, ensure local state cannot be reverted out of sync with back end
         reportStatus("Changes written successfully to the Identity Store");
-      } else {
+      } else if (newUsers.length > 0 || changedUsers.length > 0) {
+        console.log(`Current user set before setUsers():`);
+        console.table(usersCopy);
+        setUsers(usersCopy);
+        setOriginalUsers(structuredClone(usersCopy));
         reportStatus(saveChangesOutcome);
+      } else {
+        reportStatus("No changes to write");
       }
-    } else if (newUsers.length > 0 && changedUsers.length === 0) {
-      reportStatus(saveChangesOutcome);
-    } else if (newUsers.length === 0 && changedUsers.length > 0) {
+    } catch (error) {
       reportStatus(saveChangesOutcome);
     }
-    console.log(`Current user set before setUsers():`);
-    console.table(usersCopy);
-    setUsers(usersCopy); // Update state so changes are reflected on the page
+
+    // if (successFlag) {
+    //   setSaveSuccess(true); // <-- This may no longer be necessary if setUsers(localUsers) works with updated localUsers
+    //   if (newUsers.length > 0 && changedUsers.length > 0) {
+    //     // Now duplicated above
+    //     reportStatus("Changes written successfully to the Identity Store"); // Now duplicated above
+    //   } else if (newUsers.length > 0 || changedUsers.length > 0) {
+    //     // Now duplicated above
+    //     reportStatus(saveChangesOutcome); // Now duplicated above
+    //   } // Now duplicated above
+    // } else {
+    //   // reportStatus(saveChangesOutcome);  // <-- Not necessary when reported from catch block
+    //   setSaveSuccess(false); // <-- May no longer be necessary to use this state variable
+    // }
+
+    // Clear newUsers and changedUsers arrays now they are committed to the identity store (commented out to test using state variable instead)
+    // newUsers.length = 0;
+    // changedUsers.length = 0;
+    // setUsers(usersCopy); // Update state so changes are reflected on the page <-- Ensure usersCopy has correct user.id, isNew, and isChanged values first
   }
 
   function deleteToggleChanges(user: UserData) {

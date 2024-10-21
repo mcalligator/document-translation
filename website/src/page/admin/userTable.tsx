@@ -65,20 +65,20 @@ export default function UserTable({
           const currentWidth = col.colRef.current!.offsetWidth;
           const absLeft = e.clientX - currentWidth;
           const newWidth = currentWidth + e.movementX;
-          console.log(
-            `    ClientX: ${e.clientX} | offsetWidth: ${col.colRef.current!.offsetWidth} | absLeft: ${absLeft} | movementX: ${e.movementX} | newWidth: ${newWidth}`
-          );
+          // console.log(
+          //   `    ClientX: ${e.clientX} | offsetWidth: ${col.colRef.current!.offsetWidth} | absLeft: ${absLeft} | movementX: ${e.movementX} | newWidth: ${newWidth}`
+          // );
           if (newWidth >= col.minWidth) {
-            console.log(` --- Column width set to ${newWidth}`);
+            // console.log(` --- Column width set to ${newWidth}`);
             return `${newWidth}px`;
           } else {
-            console.log(`*** Mininum column width of ${col.minWidth} reached ***`);
+            // console.log(`*** Mininum column width of ${col.minWidth} reached ***`);
           }
         }
         return `${col.colRef.current!.offsetWidth}px`;
       });
       const columnDefs = `${gridColumns.join(" ")}`;
-      console.log(`Column Widths: ${columnDefs}`);
+      // console.log(`Column Widths: ${columnDefs}`);
       tableElement!.current!.style.gridTemplateColumns = columnDefs;
     },
     [activeIndex, columnSet]
@@ -101,7 +101,7 @@ export default function UserTable({
   }, [activeIndex, mouseMove, mouseUp, removeListeners]);
 
   const mouseDown = (e: MouseEvent, index: number) => {
-    console.log(`MouseDown at ${e.clientX}`);
+    // console.log(`MouseDown at ${e.clientX}`);
     setActiveIndex(index);
   };
 
