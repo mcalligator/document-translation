@@ -234,7 +234,7 @@ export default function AdminPanel(currentUser: any) {
       // Display operation-specific outcomes:
       if (newUsers.length > 0 && changedUsers.length > 0) {
         setUsers(usersCopy);
-        setOriginalUsers(structuredClone(usersCopy)); // Now that changes successfully applied, ensure local state cannot be reverted out of sync with back end
+        setOriginalUsers(usersCopy); // Now that changes successfully applied, ensure local state cannot be reverted out of sync with back end
         reportStatus("Changes written successfully to the Identity Store");
       } else if (newUsers.length > 0 || changedUsers.length > 0) {
         console.log(`Current user set before setUsers():`);
@@ -248,25 +248,6 @@ export default function AdminPanel(currentUser: any) {
     } catch (error) {
       reportStatus(saveChangesOutcome);
     }
-
-    // if (successFlag) {
-    //   setSaveSuccess(true); // <-- This may no longer be necessary if setUsers(localUsers) works with updated localUsers
-    //   if (newUsers.length > 0 && changedUsers.length > 0) {
-    //     // Now duplicated above
-    //     reportStatus("Changes written successfully to the Identity Store"); // Now duplicated above
-    //   } else if (newUsers.length > 0 || changedUsers.length > 0) {
-    //     // Now duplicated above
-    //     reportStatus(saveChangesOutcome); // Now duplicated above
-    //   } // Now duplicated above
-    // } else {
-    //   // reportStatus(saveChangesOutcome);  // <-- Not necessary when reported from catch block
-    //   setSaveSuccess(false); // <-- May no longer be necessary to use this state variable
-    // }
-
-    // Clear newUsers and changedUsers arrays now they are committed to the identity store (commented out to test using state variable instead)
-    // newUsers.length = 0;
-    // changedUsers.length = 0;
-    // setUsers(usersCopy); // Update state so changes are reflected on the page <-- Ensure usersCopy has correct user.id, isNew, and isChanged values first
   }
 
   function deleteToggleChanges(user: UserData) {
@@ -304,6 +285,7 @@ export default function AdminPanel(currentUser: any) {
       // console.table(usersCopy);
       reportStatus(deleteUsersOutcome.message);
       setUsers(usersCopy);
+      setOriginalUsers(usersCopy); // Now that user(s) successfully deleted, ensure local state cannot be reverted out of sync with back end
       // Reset set of users deleted:
       let tempUsers = rowsToDelete;
       tempUsers.clear();
