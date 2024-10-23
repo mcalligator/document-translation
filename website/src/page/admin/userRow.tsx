@@ -12,7 +12,7 @@ interface UserRowProps {
   updateUserSetWithChanges: Function;
   deleteToggleChanges: Function;
   reportStatus: Function;
-  columns: ColumnDefinition[];
+  fields: ColumnDefinition[];
 }
 
 export default function UserRow({
@@ -20,7 +20,7 @@ export default function UserRow({
   updateUserSetWithChanges,
   deleteToggleChanges,
   reportStatus,
-  columns,
+  fields,
 }: UserRowProps) {
   const [userDetails, setUserDetails] = useState<UserData>(user);
   const [deleteChecked, setDeleteChecked] = useState(false); // Local state for Delete User tickbox
@@ -38,11 +38,10 @@ export default function UserRow({
     /*
     Updates field content with text typed, and resizes it appropriately
     */
-    // console.log(
-    //   "handleChange - value before change: " + JSON.stringify(userDetails)
-    // );
-    let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
-    // let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
+    // console.log("handleChange - value before change: " + JSON.stringify(userDetails)); // <-- Delete after debugging
+    let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
+    const currentColumn = fields.find((col) => col.name === e.target.name);
+    const minWidth = currentColumn?.minWidth || 0;
     // e.target.style.width = "30px";
     e.target.style.width = `${e.target.scrollWidth}px`;
     const fieldName: string = e.target.name;
@@ -60,13 +59,13 @@ export default function UserRow({
         }
       }
     }
-    // console.log(
-    //   " handleChange - previous value of user: " + JSON.stringify(userCopy)
-    // );
+    const charWidth = 8; // Approximate width of a character in pixels
+    const newWidth = Math.max(e.target.value.length * charWidth, minWidth);
+    e.target.style.width = `${newWidth}px`;
+
+    // console.log(" handleChange - previous value of user: " + JSON.stringify(userCopy));  // <-- Delete after debugging
     userCopy[fieldName] = e.target.value;
-    // console.log(
-    //   " handleChange - Updated value of user: " + JSON.stringify(userCopy)
-    // );
+    // console.log(" handleChange - Updated value of user: " + JSON.stringify(userCopy)); // <-- Delete after debugging
     setUserDetails(userCopy);
   }
 
@@ -119,9 +118,9 @@ export default function UserRow({
     <>
       <td>
         <input
-          name="firstName"
+          name={fields[0].name}
           type="text"
-          size={columns[0].minWidth / 8} // replace this by calculating longest entry in this column
+          style={{ width: fields[0].minWidth }} // Replace with dynamic calculation of longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.firstName}
@@ -131,9 +130,9 @@ export default function UserRow({
       </td>
       <td>
         <input
-          name="lastName"
+          name={fields[1].name}
           type="text"
-          size={columns[1].minWidth / 8} // replace this by calculating longest entry in this column
+          style={{ width: fields[1].minWidth }} // Replace with dynamic calculation of longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.lastName}
@@ -143,9 +142,9 @@ export default function UserRow({
       </td>
       <td>
         <input
-          name="email"
+          name={fields[2].name}
           type="email"
-          size={columns[2].minWidth / 8} // replace this by calculating longest entry in this column
+          style={{ width: fields[2].minWidth }} // Replace with dynamic calculation of longest entry in this column
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           placeholder="user@domain"

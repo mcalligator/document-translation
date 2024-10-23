@@ -6,6 +6,7 @@ export interface Credentials {
 }
 
 export interface ColumnDefinition {
+  name: string;
   title: string;
   minWidth: number;
 }

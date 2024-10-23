@@ -41,11 +41,6 @@ export default function UserTable({
   };
 
   const columnSet = createHeadingRefs(columnDefinitions);
-  // for (const col of columns) {
-  //   console.log(`Column ${col.text} has width ${col.columnWidth}`);
-  // }
-
-  // console.table(users);
 
   useEffect(() => {
     setTableHeight(tableElement!.current!.offsetHeight);
@@ -63,16 +58,9 @@ export default function UserTable({
       const gridColumns: string[] = columnSet.map((col: HeadingDetails, i) => {
         if (i === activeIndex) {
           const currentWidth = col.colRef.current!.offsetWidth;
-          const absLeft = e.clientX - currentWidth;
           const newWidth = currentWidth + e.movementX;
-          // console.log(
-          //   `    ClientX: ${e.clientX} | offsetWidth: ${col.colRef.current!.offsetWidth} | absLeft: ${absLeft} | movementX: ${e.movementX} | newWidth: ${newWidth}`
-          // );
           if (newWidth >= col.minWidth) {
-            // console.log(` --- Column width set to ${newWidth}`);
             return `${newWidth}px`;
-          } else {
-            // console.log(`*** Mininum column width of ${col.minWidth} reached ***`);
           }
         }
         return `${col.colRef.current!.offsetWidth}px`;
@@ -136,7 +124,7 @@ export default function UserTable({
                   updateUserSetWithChanges={updateUserSetWithChanges}
                   deleteToggleChanges={deleteToggleChanges}
                   reportStatus={reportStatus}
-                  columns={columnDefinitions}
+                  fields={columnDefinitions}
                 />
               </tr>
             );

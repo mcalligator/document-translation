@@ -303,10 +303,10 @@ export default function AdminPanel(currentUser: any) {
   }
 
   const columns = [
-    { title: "First Name", minWidth: 85 },
-    { title: "Last Name", minWidth: 85 },
-    { title: "Email", minWidth: 235 },
-    { title: "Delete?", minWidth: 10 },
+    { name: "firstName", title: "First Name", minWidth: 85 },
+    { name: "lastName", title: "Last Name", minWidth: 85 },
+    { name: "email", title: "Email", minWidth: 235 },
+    { name: "delete", title: "Delete?", minWidth: 10 },
   ];
 
   return (

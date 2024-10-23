@@ -1,4 +1,4 @@
-import { Credentials } from "./typeExtensions";
+import { ColumnDefinition, Credentials } from "./typeExtensions";
 
 import { InvokeCommand, InvokeCommandInput, LambdaClient } from "@aws-sdk/client-lambda";
 
@@ -67,7 +67,7 @@ export interface Entitlement {
   userCount: number;
 }
 
-const getEntitlement = async function (
+export async function getEntitlement(
   lambdaFunctionArn: string,
   adminCredentials: Credentials,
   tenantId: string
@@ -115,6 +115,27 @@ const getEntitlement = async function (
       userCount: 0,
     };
   }
-};
+}
 
-export { getEntitlement };
+export function adjustInputWidth(input: HTMLInputElement) {
+  const minWidth = 50; // Minimum width in pixels
+  const maxWidth = 500; // Maximum width in pixels
+  const padding = 8; // Padding on each side of the input
+
+  // Create a temporary element to measure text width
+  const temp = document.createElement("span");
+  temp.style.font = getComputedStyle(input).font;
+  temp.style.visibility = "hidden";
+  temp.style.position = "absolute";
+  temp.style.whiteSpace = "pre";
+  temp.textContent = input.value || input.placeholder || "";
+  document.body.appendChild(temp);
+
+  // Calculate the new width
+  const textWidth = temp.offsetWidth;
+  document.body.removeChild(temp);
+
+  // Set new width, accounting for padding and staying within min/max bounds
+  const newWidth = Math.min(Math.max(textWidth + padding * 2, minWidth), maxWidth);
+  input.style.width = `${newWidth}px`;
+}
