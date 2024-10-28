@@ -42,8 +42,6 @@ export default function UserRow({
     let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
     const currentColumn = fields.find((col) => col.name === e.target.name);
     const minWidth = currentColumn?.minWidth || 0;
-    // e.target.style.width = "30px";
-    e.target.style.width = `${e.target.scrollWidth}px`;
     const fieldName: string = e.target.name;
     if (!userCopy.isNew) {
       if (!userCopy.isChanged) {
