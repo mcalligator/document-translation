@@ -43,6 +43,7 @@ export class DocTranStack extends cdk.Stack {
   public readonly appHostedUrl: cdk.CfnOutput;
   public readonly appHostedUrlCloudFront: cdk.CfnOutput;
   public readonly manageUsersFunctionName: cdk.CfnOutput;
+  public readonly entitlementFunctionName: cdk.CfnOutput;
 
   // OUTPUTS | SAML PROVIDER
   public readonly samlIdentifier: cdk.CfnOutput;
@@ -136,6 +137,9 @@ export class DocTranStack extends cdk.Stack {
     });
     this.manageUsersFunctionName = new cdk.CfnOutput(this, "manageUsersFunctionName", {
       value: base_api.manageUsersFunction.lambdaFunction.functionName,
+    });
+    this.entitlementFunctionName = new cdk.CfnOutput(this, "entitlementFunctionName", {
+      value: base_api.entitlementFunction.lambdaFunction.functionName,
     });
     this.awsAppsyncId = new cdk.CfnOutput(this, "awsAppsyncId", {
       value: base_api.api.apiId,

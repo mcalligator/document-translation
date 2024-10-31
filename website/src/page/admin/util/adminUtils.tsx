@@ -68,13 +68,12 @@ export interface Entitlement {
 }
 
 export async function getEntitlement(
-  lambdaFunctionArn: string,
+  lambdaFunctionName: string,
   adminCredentials: Credentials,
   tenantId: string
 ): Promise<Entitlement> {
   const lambdaClient = new LambdaClient({
     region: "eu-west-2",
-    // adminCredentials, // Experiment with more concise code
     credentials: {
       accessKeyId: adminCredentials!.accessKeyId,
       secretAccessKey: adminCredentials!.secretAccessKey,
@@ -82,11 +81,11 @@ export async function getEntitlement(
     },
   });
   const lambdaParams: InvokeCommandInput = {
-    FunctionName: lambdaFunctionArn,
+    FunctionName: lambdaFunctionName,
     InvocationType: "RequestResponse",
     Payload: JSON.stringify({
       tenantId: tenantId,
-      ProductCode: "c9z0oe0qbge757tw4e5ey0fc0",
+      productCode: "c9z0oe0qbge757tw4e5ey0fc0",
     }),
   };
 
@@ -98,9 +97,7 @@ export async function getEntitlement(
       new TextDecoder().decode(lambdaInvokeResponse.Payload)
     );
 
-    // console.log(
-    //   `Entitlement response:\n${JSON.stringify(entitlementResponse)}`
-    // );
+    // console.log(`Entitlement response:\n${JSON.stringify(entitlementResponse)}`);
 
     return {
       subscriptionStatus: entitlementResponse.subscriptionStatus,

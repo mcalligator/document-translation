@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
+import cfnOutputs from "../../cfnOutputs.json";
+
 import React, { useEffect, useState } from "react";
 
 import {
@@ -88,14 +90,11 @@ export default function AdminPanel(currentUser: any) {
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
         try {
-          // console.log(
-          //   `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
-          // );
-          // const getEntitlementFunctionArn = cfnOutputs.getEntitlementFunctionArn;  // Uncomment once deployed via CDK
-          const getEntitlementFunctionArn =
-            "arn:aws:lambda:eu-west-2:471112910241:function:DocTran-mt-test-app-"; // Temporarily hard-coded
+          console.log(
+            `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
+          );
           const entitlement = await getEntitlement(
-            getEntitlementFunctionArn,
+            cfnOutputs.entitlementFunctionName,
             adminCredentials,
             tenantId
           );
