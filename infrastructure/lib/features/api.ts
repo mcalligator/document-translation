@@ -1,5 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
+// This file contains several hard-coded values relating to the associated SaaS Marketplace Integration solution.
+// If it proves necessary to parameterise these, the most appropriate place (for v2.x of this solution) for them is the Shared Configuration.
 
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
@@ -34,6 +36,7 @@ export class dt_api extends Construct {
   public readonly userPoolClient: cognito.UserPoolClient;
   public readonly userPoolDomain: cognito.UserPoolDomain;
   public readonly manageUsersFunction: dt_lambda;
+  public readonly entitlementFunction: dt_lambda;
 
   constructor(scope: Construct, id: string, props: props) {
     super(scope, id);
@@ -270,17 +273,24 @@ export class dt_api extends Construct {
       }),
     );
 
-    // IAM Role for initial tenant setup, revocation, and reinstatement (assumed by GrantOrRevokeAccess Lambda function in SaaS Marketplace Integration solution)
-    // Future enhancement: extract the following three constants as parameters supplied to CTX
+    // USER MANAGEMENT
+    /*
+      This involves two Lambda functions: one to determine tenant subscription entitlements (GetEntitlements), and the other to perform CRUD operations on Cognito user accounts.  Both are invoked by the Tenant Admin role assumed by admin users when authenticated by Cognito.
+      There are several associated IAM roles:
+      - TenantAccessManagementRole for initial tenant setup, revocation, and reinstatement (assumed by GrantOrRevokeAccess Lambda function in SaaS MPI solution)
+      - TenantAdminRole assumed by admin user granting admin privileges for a given tenant.
+      - ManageUsersLambdaRole: execution role for manageUsers Lambda function.
+      - EntitlementLambdaRole: execution role for getEntitlement Lambda function.
+      - saasAccessManagementRole: assumed by grant-revoke-access-to-product Lambda function in SaaS MPI solution
+    */
+    // The following three constants are currently hard-coded, but may in future be supplied as parameters supplied to the solution.
     const saasManagementAccount = "534936370474";
-    const saasAccessManagementFunctionName = "ctx-mpi-prod-GrantOrRevokeAccess-Ythh7O1dKtkS";
-    const saasAccessManagementRole = "ctx-mpi-prod-GrantOrRevokeAccessRole-DO4U7W64ja7U";
+    const saasAccessManagementFunctionName = "ctx-mpi-prod-GrantOrRevokeAccess-xkKyG7CBoIOu";
+    const saasAccessManagementRole = "ctx-mpi-prod-GrantOrRevokeAccessRole-8Ipd75KrvUvh";
+    const saasEntitlementRole = "saas-mpi-test-GetEntitlementsRole"; // Assumed by GetEntitlements Lambda function in SaaS Deployment account
     const tenantAccessManagementRole = new iam.Role(this, "TenantAccessManagementRole", {
-      assumedBy: new iam.CompositePrincipal(
-        new iam.ServicePrincipal("lambda.amazonaws.com"),
-        new iam.ArnPrincipal(
-          `arn:aws:iam::${saasManagementAccount}:role/${saasAccessManagementRole}`,
-        ),
+      assumedBy: new iam.ArnPrincipal(
+        `arn:aws:iam::${saasManagementAccount}:role/${saasAccessManagementRole}`,
       ),
       description: "Role for initial tenant setup, revocation, and reinstatement",
     });
@@ -318,8 +328,8 @@ export class dt_api extends Construct {
       }),
     );
 
-    // IAM Role for Cognito Admin
-    const assumeRoleConditions: cdk.aws_iam.Conditions = {
+    // IAM Role for Cognito User Admin
+    const assumeTenantAdminRoleConditions: cdk.aws_iam.Conditions = {
       StringEquals: {
         "cognito-identity.amazonaws.com:aud": this.identityPool.identityPoolId,
       },
@@ -331,7 +341,7 @@ export class dt_api extends Construct {
     const tenantAdminRole = new iam.Role(this, "TenantAdminRole", {
       assumedBy: new iam.FederatedPrincipal(
         "cognito-identity.amazonaws.com",
-        assumeRoleConditions,
+        assumeTenantAdminRoleConditions,
         "sts:AssumeRoleWithWebIdentity",
       ),
       description: "Tenant Administration Role",
@@ -397,10 +407,8 @@ export class dt_api extends Construct {
         true,
       );
     }
-    //
-    // USER MANAGEMENT
-    //
-    const manageUsersLambdaRole = new iam.Role(this, "manageUsersLambdaRole", {
+
+    const manageUsersLambdaRole = new iam.Role(this, "ManageUsersLambdaRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       description: "Lambda execution role for user management",
     });
@@ -411,8 +419,8 @@ export class dt_api extends Construct {
       description: "Manage Users in Cognito",
     });
 
-    const policyPermitTenantAdmin = new iam.Policy(this, "TenantAdminPermissions", {
-      policyName: "Tenant-Admin-Permissions",
+    const policyPermitManageUsers = new iam.Policy(this, "UserManagementPermissions", {
+      policyName: "User-Management-Permissions",
       statements: [
         new iam.PolicyStatement({
           sid: "InvokeUserManagementLambdaFunction",
@@ -422,52 +430,8 @@ export class dt_api extends Construct {
         }),
       ],
     });
+    tenantAdminRole.attachInlinePolicy(policyPermitManageUsers);
 
-    // The following policy and its attachment is disabled, since it is due for replacement by a Lambda function
-    // const policyPermitTenantAdminGetEntitlements = new iam.Policy(
-    // 	this,
-    // 	"TenantAdminPermissionsGetEntitlements",
-    // 	{
-    // 		policyName: "Tenant-Admin-Permissions-GetEntitlements",
-    // 		statements: [
-    // 			new iam.PolicyStatement({
-    // 				// ASM-IAM
-    // 				effect: iam.Effect.ALLOW,
-    // 				actions: ["aws-marketplace:GetEntitlements"],
-    // 				resources: ["*"],
-    // 			}),
-    // 		],
-    // 	},
-    // );
-
-    tenantAdminRole.attachInlinePolicy(policyPermitTenantAdmin);
-    // policyPermitTenantAdminGetEntitlements.attachToRole(tenantAdminRole);
-
-    // NagSuppressions.addResourceSuppressions(
-    // 	policyPermitTenantAdminGetEntitlements,
-    // 	[
-    // 		{
-    // 			id: "AwsSolutions-IAM5",
-    // 			reason: "Scoped to Cognito-specific group. Allow wildcard.",
-    // 			appliesTo: [
-    // 				"Action::aws-marketplace:GetEntitlements",
-    // 				"arn:aws:aws-marketplace:::*",
-    // 			],
-    // 		},
-    // 	],
-    // 	true,
-    // );
-
-    NagSuppressions.addResourceSuppressions(
-      this.manageUsersFunction,
-      [
-        {
-          id: "AwsSolutions-L1",
-          reason: "Configured runtime is NODEJS_20_X",
-        },
-      ],
-      true,
-    );
     manageUsersLambdaRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
     );
@@ -490,6 +454,85 @@ export class dt_api extends Construct {
         ],
       }),
     );
+    // Lambda function for getting tenant's subscription entitlement
+    const entitlementLambdaRole = new iam.Role(this, "EntitlementLambdaRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      description: "Lambda execution role for determining Marketplace subscription entitlement",
+    });
+    this.entitlementFunction = new dt_lambda(this, "entitlementFunction", {
+      functionName: "GetEntitlement",
+      role: entitlementLambdaRole,
+      path: "lambda/getEntitlement",
+      description: "Get tenant's Marketplace subscription entitlement",
+      environment: {
+        ENTITLEMENT_ROLE_ARN: `arn:aws:iam::${saasManagementAccount}:role/${saasEntitlementRole}`,
+        // Entitlement values are hard-coded here:
+        ENTITLEMENT_CODES: `[
+          { "entitlementId": "T1", "userCount": 5 },
+          { "entitlementId": "T2", "userCount": 8 },
+          { "entitlementId": "T3", "userCount": 10 },
+        ]`,
+      },
+    });
+
+    const policyPermitAccessManagement = new iam.Policy(this, "TenantAccessManagementPermissions", {
+      policyName: "Assume-Saas-Entitlement-Role",
+      statements: [
+        new iam.PolicyStatement({
+          sid: "AssumeSaasEntitlementRole",
+          effect: iam.Effect.ALLOW,
+          actions: ["sts:AssumeRole"],
+          resources: [`arn:aws:iam::${saasManagementAccount}:role/${saasEntitlementRole}`],
+        }),
+      ],
+    });
+    tenantAdminRole.attachInlinePolicy(policyPermitAccessManagement);
+
+    const policyPermitInvokeEntitlementsFunction = new iam.Policy(
+      this,
+      "InvokeLocalEntitlementsFunction",
+      {
+        policyName: "Invoke-Entitlements-Function",
+        statements: [
+          new iam.PolicyStatement({
+            sid: "InvokeEntitlementsFunction",
+            effect: iam.Effect.ALLOW,
+            actions: ["lambda:InvokeFunction"],
+            resources: [this.entitlementFunction.lambdaFunction.functionArn],
+          }),
+        ],
+      },
+    );
+    tenantAdminRole.attachInlinePolicy(policyPermitInvokeEntitlementsFunction);
+
+    const policyPermitAccessManagementRoleAssumption = new iam.Policy(
+      this,
+      "AccessManagementRoleAssumptionPermissions",
+      {
+        policyName: "Entitlement-Role-Assumption",
+        statements: [
+          new iam.PolicyStatement({
+            sid: "AssumeSaasEntitlementRole",
+            effect: iam.Effect.ALLOW,
+            actions: ["sts:AssumeRole"],
+            resources: [`arn:aws:iam::${saasManagementAccount}:role/${saasAccessManagementRole}`],
+          }),
+        ],
+      },
+    );
+    entitlementLambdaRole.attachInlinePolicy(policyPermitAccessManagementRoleAssumption);
+
+    NagSuppressions.addResourceSuppressions(
+      this.manageUsersFunction,
+      [
+        {
+          id: "AwsSolutions-L1",
+          reason: "Configured runtime is NODEJS_20_X",
+        },
+      ],
+      true,
+    );
+
     NagSuppressions.addResourceSuppressions(
       manageUsersLambdaRole,
       [

@@ -38,7 +38,8 @@ export class dt_lambda extends Construct {
     let logGroup: LogGroup | undefined;
     if (props.functionName) {
       logGroup = new LogGroup(this, "LambdaFunctionLogs", {
-        logGroupName: `/aws/lambda/${props.functionName}`,
+        logGroupName: `/aws/lambda/DocTran-app-${props.functionName}`,
+
         retention: RetentionDays.ONE_MONTH,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       });
@@ -47,7 +48,7 @@ export class dt_lambda extends Construct {
     // FUNCTION
     this.lambdaFunction = new nodejs.NodejsFunction(this, lambdaLogicalId, {
       // UNIQUE
-      functionName: props.functionName,
+      functionName: `DocTran-app-function-${props.functionName}`,
       role: props.role, // ASM-L7
       entry: `${props.path}/index.ts`,
       description: props.description,

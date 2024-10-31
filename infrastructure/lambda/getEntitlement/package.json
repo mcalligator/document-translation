@@ -1,0 +1,31 @@
+{
+  "name": "get-entitlement",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Determine tenant subscription entitlement from AWS Marketplace",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mcalligator",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "20.14.9",
+    "@types/prettier": "2.7.3",
+    "esbuild": "^0.24.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "prettier": "3.2.5",
+    "ts-jest": "^29.1.5",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-marketplace-entitlement-service": "^3.682.0",
+    "constructs": "^10.0.0",
+    "typescript": "^5.6.2"
+  }
+}
