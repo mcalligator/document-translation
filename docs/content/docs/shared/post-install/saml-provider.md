@@ -11,13 +11,14 @@ SPDX-License-Identifier: MIT-0
 {{< callout type="warning" >}}
 This step is **conditional**.
 
-- If you have chosen to use SAML Provider Local Users this step is **required**.
+- If you have chosen to use a SAML Provider for user accounts, this step is **required**.
 - If not this step can be **skipped**.
-{{< /callout >}}
+- **Note**: this has not been implemented for the multi-tenanted version of City Trax Translate. Future versions may support the integration of one or more SAML providers.
+  {{< /callout >}}
 
-This installation guide assumes that the user directory used for the SAML provider is Azure Active Directory. If you are  using a different provider please convert the following instructions to your particular provider.
+This installation guide assumes that the user directory used for the SAML provider is Microsoft Entra ID. If using a different provider, adapt the following instructions to meet that provider's requirements.
 
-Once installation is complete AWS CloudFormation will output the required values to update the SAML provider. 
+Once installation is complete, AWS CloudFormation will output the required values to update the SAML provider.
 
 - Navigate to the [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home)
 - Select the app stack (E.g. `DocTran-main-app`)

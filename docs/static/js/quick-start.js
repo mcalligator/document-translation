@@ -1,7 +1,7 @@
 // FORM REPO TAGS
 async function getRepoTags() {
 	const response = await fetch(
-		"https://api.github.com/repos/aws-samples/document-translation/tags"
+		"https://api.github.com/repos/citytrax/document-translation-saas/tags"
 	);
 	const repoTags = await response.json();
 	var options = "";
@@ -213,11 +213,11 @@ function handleForm(event) {
 	appendSection("Clone source code");
 	appendStep(
 		"Clone the upstream project git repository",
-		"git clone https://github.com/aws-samples/document-translation.git"
+		"git clone https://github.com/citytrax/document-translation-saas.git"
 	);
 	appendStep(
 		"Change directory into the pulled project directory",
-		"cd document-translation"
+		"cd document-translation-saas"
 	);
 	appendStep("Fetch available tags", "git fetch --all --tags");
 	appendStep("View tags", "git tag");

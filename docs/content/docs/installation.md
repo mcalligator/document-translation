@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT-0
 
 This project is [configurable]({{< ref "docs/architecture" >}}) to suit your specific requirements. For a full explanation of the various options please review the feature configuration options in the [documentation]({{< ref "docs" >}}).
 
-This form will collate your inputs and return the appropriate commands to enter for deployment. The output can be used with the [CloudShell]({{< ref "docs/shared/prerequisites/cloudshell" >}}) to quickly perform the installation. Please review the output to ensure you are happy with the values.
+This form will collate your inputs and return the appropriate commands to enter for deployment. The output can be used with the [CloudShell]({{< ref "docs/shared/prerequisites/cloudshell" >}}) or an Amazon EC2 instance (preferred) to perform the installation quickly. Please review the output to ensure you are happy with the values.
 
-Installation typically takes between 30-60 minutes. This result will deploy a CloudFormation stack for the pipeline. That CodePipeline workflow will deploy a CloudFormation stack for the app. You can monitor the progress of the pipeline from the CodePipeline service.
+Installation typically takes between 30-60 minutes. This will deploy a CloudFormation stack for a CodePipeline pipeline. That CodePipeline workflow will deploy a second CloudFormation stack for the CTX app. The progress of the pipeline can be monitored from the CodePipeline console.
 
 <br/>
 <div id="resultWrapper" style="display: none;">
@@ -33,24 +33,23 @@ All fields in this section are required for all features you decide to enable.
 <fieldset>
 <div>
 	<label for="accountId">AWS Account ID</label>
-	<p class="sublabel" >The account ID being deployed into.</p>
-	<input class="requiredForGitHub" type="text" name="accountId" placeholder="123456789012" maxlength="12" minlength="12" pattern="\d+" required/>
+	<p class="sublabel" >The target AWS account ID for the deployment.</p>
+	<input class="requiredForGitHub" type="text" name="accountId" placeholder="471112910241" maxlength="12" minlength="12" pattern="\d+" required/>
 </div>
 <div>
 	<label for="sourceGitTag">Git Release Tag</label>
 	<select id="sourceGitTag" name="sourceGitTag">
-		<option value="v1.1.2">v1.1.2</option>
+		<option value="v1.1.2">v2.3.5</option>
 	</select>
 </div>
 </fieldset>
 
-<h4>Source Service {{< info >}}/document-translation/docs/shared/configuration/source-service{{< /info >}}</h4>
+<h4>Source Service {{< info >}}/document-translation-saas/docs/shared/configuration/source-service{{< /info >}}</h4>
 
 <fieldset>
 <div>
 	<label for="sourceGitService">Service</label>
 	<select name="sourceGitService">
-		<option value="codecommit">AWS CodeCommit</option>
 		<option value="github">GitHub</option>
 	</select>
 </div>
@@ -64,11 +63,11 @@ All fields in this section are required for all features you decide to enable.
 </div>
 <div>
 	<label for="sourceGitRepo">Repo Name</label>
-	<input type="text" name="sourceGitRepo" placeholder="document-translation" value="document-translation" required>
+	<input type="text" name="sourceGitRepo" placeholder="document-translation-saas" value="document-translation-saas" required>
 </div>
 <div>
 	<label for="sourceGitBranch">Branch Name</label>
-	<input type="text" name="sourceGitBranch" placeholder="main" value="main" required/>
+	<input type="text" name="sourceGitBranch" placeholder="mt-prod" value="mt-prod" required/>
 </div>
 </fieldset>
 
@@ -76,7 +75,7 @@ All fields in this section are required for all features you decide to enable.
 
 At least one selection for user store is required. Select Cognito SAML, or Cognito Local, or both.
 
-<h4><input type="checkbox" name="cognitoSamlUsers" checked/>Cognito SAML Users {{< info >}}/document-translation/docs/translation/configuration/options#enable-cognito-saml-provider-users{{< /info >}}</h4>
+<h4><input type="checkbox" name="cognitoSamlUsers"/>Cognito SAML Users {{< info >}}/document-translation-saas/docs/translation/configuration/options#enable-cognito-saml-provider-users{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForCognitoSamlUsers">
@@ -88,7 +87,7 @@ At least one selection for user store is required. Select Cognito SAML, or Cogni
 </div>
 </fieldset>
 
-<h4><input type="checkbox" name="cognitoLocalUsers"/>Cognito Local Users {{< info >}}/document-translation/docs/translation/configuration/options#enable-cognito-local-users{{< /info >}}</h4>
+<h4><input type="checkbox" name="cognitoLocalUsers" checked/>Cognito Local Users {{< info >}}/document-translation-saas/docs/translation/configuration/options#enable-cognito-local-users{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForCognitoLocalUsers" style="display: none;">
@@ -116,7 +115,7 @@ At least one selection for user store is required. Select Cognito SAML, or Cogni
 
 Enable and configure the features you wish to deploy.
 
-<h4><input type="checkbox" name="webUi" checked/>Web UI {{< info >}}/document-translation/docs/translation/configuration/options#enable-web-ui{{< /info >}}</h4>
+<h4><input type="checkbox" name="webUi" checked/>Web UI {{< info >}}/document-translation-saas/docs/translation/configuration/options#enable-web-ui{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForCognitoLocalUsers" style="display: none;">
@@ -124,7 +123,7 @@ Enable and configure the features you wish to deploy.
 </div>
 </fieldset>
 
-<h4><input type="checkbox" name="customDomainEnable"/>Custom Domain {{< info >}}/document-translation/docs/shared/prerequisites/domain{{< /info >}}</h4>
+<h4><input type="checkbox" name="customDomainEnable" checked/>Custom Domain {{< info >}}/document-translation-saas/docs/shared/prerequisites/domain{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForCustomDomain" style="display: none;">
@@ -139,7 +138,7 @@ Enable and configure the features you wish to deploy.
 
 ### Optional: Document Translation
 
-<h4><input type="checkbox" name="translation" checked/>Document Translation {{< info >}}/document-translation/docs/translation/configuration/options#translation--translation-pii{{< /info >}}</h4>
+<h4><input type="checkbox" name="translation" checked/>Document Translation {{< info >}}/document-translation-saas/docs/translation/configuration/options#translation--translation-pii{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForTranslation">
@@ -148,7 +147,7 @@ Enable and configure the features you wish to deploy.
 </div>
 </fieldset>
 
-<h4><input type="checkbox" name="piiDetectionEnable" checked/>Document Translation PII Detection {{< info >}}/document-translation/docs/translation/configuration/options#translation--translation-pii{{< /info >}}</h4>
+<h4><input type="checkbox" name="piiDetectionEnable" checked/>Document Translation PII Detection {{< info >}}/document-translation-saas/docs/translation/configuration/options#translation--translation-pii{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForPiiDetection">
@@ -159,7 +158,7 @@ Enable and configure the features you wish to deploy.
 
 ### Optional: Simply Readable
 
-<h4><input type="checkbox" name="readable" checked/>Readable {{< info >}}/document-translation/docs/translation/configuration/options#readable{{< /info >}}</h4>
+<h4><input type="checkbox" name="readable"/>Readable {{< info >}}/document-translation-saas/docs/translation/configuration/options#readable{{< /info >}}</h4>
 
 <fieldset>
 <div class="isForReadable">

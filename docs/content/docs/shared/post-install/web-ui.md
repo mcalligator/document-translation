@@ -15,4 +15,4 @@ This step is **required**.
 - Navigate to the [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home)
 - Select the app stack (E.g. `DocTran-main-app`)
 - Select the "Outputs" tab
-- Navigate to the URL outputted by the for value `appHostedUrl`.
+- Navigate to the URL outputted by the for value `appHostedUrl` (e.g. `ctx-translate.cloud`).

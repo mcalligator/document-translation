@@ -12,11 +12,11 @@ SPDX-License-Identifier: MIT-0
 This step is **recommended**.
 {{< /callout >}}
 
-It is recommended to install this project workload into a dedicated AWS account separate from existing applications and infrastructure. AWS Organizations allow for the management and centralised billing of multiple AWS Accounts within an organizational structure. This recommendation follows the AWS Well Architected Framework.
+This solution is deployed into the dedicated AWS account `471112910241`(`saas-translate`), which is separate from existing applications and infrastructure. AWS Organizations allows for the management and centralised billing of multiple AWS Accounts within CIty Trax' organizational structure. This recommendation follows the AWS Well-Architected Framework.
 
 - [Organizing Your AWS Environment Using Multiple Accounts](https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/organizing-your-aws-environment.html)
 - [SEC01-BP01 Separate workloads using accounts](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html)
 
-Please provision a dedicated AWS Account for this workload within your AWS Organization.    
+A separate dedicated AWS Account is recommended for the test environment of this solution within City Trax' AWS Organization.
 
 - [Provision and manage accounts with Account Factory](https://docs.aws.amazon.com/controltower/latest/userguide/account-factory.html)

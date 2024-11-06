@@ -1,4 +1,4 @@
-module github.com/aws-samples/document-translation
+module github.com/citytrax/document-translation-saas
 
 go 1.21
 

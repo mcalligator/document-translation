@@ -1,4 +1,4 @@
-baseURL: https://aws-samples.github.io/document-translation/
+baseURL: https://citytrax.github.io/document-translation-saas/
 languageCode: en-gb
 title: Document Transformation
 
@@ -12,7 +12,7 @@ params:
     displayLogo: false
   editURL:
     enable: true
-    base: "https://github.com/aws-samples/document-translation/tree/main/docs"
+    base: "https://github.com/citytrax/document-translation-saas/tree/main/docs"
   page:
     width: wide
 
@@ -39,6 +39,6 @@ menu:
         type: search
     - name: GitHub
       weight: 99
-      url: "https://github.com/aws-samples/document-translation"
+      url: "https://github.com/citytrax/document-translation-saas"
       params:
         icon: github

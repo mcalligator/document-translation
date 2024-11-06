@@ -14,14 +14,14 @@ Both the CI/CD pipeline and app are defined here. They can be udpated independen
 
 ```shell
 export translation="true"
-export translationPii="true"
+export translationPii="false"
 export translationLifecycleDefault="7"
 export translationLifecyclePii="3"
 
-export sourceGitService="code-commit"
-export sourceGitRepo="document-translation"
-export sourceGitBranch="dev"
-export sourceConnectionArn=""
+export sourceGitService="github"
+export sourceGitRepo="document-translation-saas"
+export sourceGitBranch="mt-dev"
+export sourceConnectionArn="<CodeConnections Connection ARN>"
 
 export cognitoLocalUsers="true"
 export cognitoLocalUsersMfa="off"
@@ -29,7 +29,7 @@ export cognitoLocalUsersMfa="off"
 export webUi="true"
 
 export readable="true"
-export readableBedrockRegion="us-west-2"
+export readableBedrockRegion="eu-west-2"
 
 export development="true"
 export appRemovalPolicy="destroy"

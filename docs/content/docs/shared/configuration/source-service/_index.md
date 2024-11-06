@@ -8,14 +8,9 @@ Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 SPDX-License-Identifier: MIT-0
 -->
 
-There are currently 2 options available for hosting the source code to your deployment. 
-
-- AWS CodeCommit **recommended**
-- GitHub
-
-Both AWS CodeCommit and GitHub offer a git based code repository service which can be used to hold a copy of this project as your source including any customisations you apply. Both options offer the same level of functionality.
+With AWS CodeCommit is having been discontinued, GitHub is the only available option for hosting the solution's source code. It provides a git-based code repository service for storing a copy of this solution's source code, including any customisations.
 
 {{< cards >}}
-  {{< card link="codecommit" title="CodeCommit" >}}
-  {{< card link="github" title="GitHub" >}}
+{{< card link="codecommit" title="CodeCommit" >}}
+{{< card link="github" title="GitHub" >}}
 {{< /cards >}}
