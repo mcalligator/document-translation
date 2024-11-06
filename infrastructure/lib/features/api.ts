@@ -285,9 +285,9 @@ export class dt_api extends Construct {
     */
     // The following three constants are currently hard-coded, but may in future be supplied as parameters supplied to the solution.
     const saasManagementAccount = "534936370474";
-    const saasAccessManagementFunctionName = "ctx-mpi-prod-GrantOrRevokeAccess-xkKyG7CBoIOu";
-    const saasAccessManagementRole = "ctx-mpi-prod-GrantOrRevokeAccessRole-8Ipd75KrvUvh";
-    const saasEntitlementRole = "saas-mpi-test-GetEntitlementsRole"; // Assumed by GetEntitlements Lambda function in SaaS Deployment account
+    const saasAccessManagementFunctionName = "ctx-mpi-prod-GrantOrRevokeAccess-N5wig0mKWS0X";
+    const saasAccessManagementRole = "ctx-mpi-prod-GrantOrRevokeAccessRole-iRzXijaisSra";
+    const saasEntitlementRole = "ctx-mpi-prod-GetEntitlementsRole"; // Assumed by GetEntitlements Lambda function in SaaS Deployment account
     const tenantAccessManagementRole = new iam.Role(this, "TenantAccessManagementRole", {
       assumedBy: new iam.ArnPrincipal(
         `arn:aws:iam::${saasManagementAccount}:role/${saasAccessManagementRole}`,

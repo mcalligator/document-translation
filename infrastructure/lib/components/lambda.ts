@@ -56,6 +56,9 @@ export class dt_lambda extends Construct {
       bundling: {
         nodeModules: props.bundlingNodeModules,
         externalModules: ["@aws-sdk/*"],
+        esbuildArgs: {
+          "--packages": "bundle",
+        },
       },
       timeout: props.timeout,
       // COMMON
