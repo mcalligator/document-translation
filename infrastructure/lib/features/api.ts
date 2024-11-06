@@ -467,11 +467,7 @@ export class dt_api extends Construct {
       environment: {
         ENTITLEMENT_ROLE_ARN: `arn:aws:iam::${saasManagementAccount}:role/${saasEntitlementRole}`,
         // Entitlement values are hard-coded here:
-        ENTITLEMENT_CODES: `[
-          { "entitlementId": "T1", "userCount": 5 },
-          { "entitlementId": "T2", "userCount": 8 },
-          { "entitlementId": "T3", "userCount": 10 },
-        ]`,
+        ENTITLEMENT_CODES: `[{ "entitlementId": "T1", "userCount": 5 },{ "entitlementId": "T2", "userCount": 8 },{ "entitlementId": "T3", "userCount": 10 }]`,
       },
     });
 
@@ -515,7 +511,7 @@ export class dt_api extends Construct {
             sid: "AssumeSaasEntitlementRole",
             effect: iam.Effect.ALLOW,
             actions: ["sts:AssumeRole"],
-            resources: [`arn:aws:iam::${saasManagementAccount}:role/${saasAccessManagementRole}`],
+            resources: [`arn:aws:iam::${saasManagementAccount}:role/${saasEntitlementRole}`],
           }),
         ],
       },
