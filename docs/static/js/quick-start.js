@@ -213,7 +213,7 @@ function handleForm(event) {
 	appendSection("Clone source code");
 	appendStep(
 		"Clone the upstream project git repository",
-		"git clone https://github.com/citytrax/document-translation-saas.git"
+		`git clone --single-branch https://github.com/citytrax/document-translation-saas.git`
 	);
 	appendStep(
 		"Change directory into the pulled project directory",

@@ -32,7 +32,7 @@ This is the preferred way of linking CodePipeline with GitHub.
 3. Click "Create connection" and choose "GitHub".
 4. Give your new connection a name.
 5. Click "Connect to GitHub", then "Connect".
-6. You will be redirected to your GitHub account and asked to authorise access by CodeStar. Follow the prompts from there to complete the connection. For more details, see [GitHub connections](https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html) in the CodePipeline documentation.
+6. You will be redirected to your GitHub account and asked to authorise access from your AWS account. Follow the prompts from there to complete the connection. For more details, see [GitHub connections](https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html) in the CodePipeline documentation.
 
 ### GitHub Access Token
 

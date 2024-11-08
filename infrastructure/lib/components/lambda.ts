@@ -39,7 +39,6 @@ export class dt_lambda extends Construct {
     if (props.functionName) {
       logGroup = new LogGroup(this, "LambdaFunctionLogs", {
         logGroupName: `/aws/lambda/DocTran-app-${props.functionName}`,
-
         retention: RetentionDays.ONE_MONTH,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       });

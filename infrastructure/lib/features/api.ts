@@ -44,7 +44,7 @@ export class dt_api extends Construct {
     // ENVIRONMENT VARIABLES
     // ENVIRONMENT VARIABLES | GITHUB REPO
     const sourceGitBranch: string =
-      process.env.sourceGitBranch !== undefined ? process.env.sourceGitBranch : "main";
+      process.env.sourceGitBranch !== undefined ? process.env.sourceGitBranch : "mt-test";
 
     // COGNITO
     // COGNITO | USERPOOL
@@ -72,10 +72,6 @@ export class dt_api extends Construct {
         required: true,
         mutable: true,
       },
-      //   phoneNumber: {
-      //     required: true,
-      //     mutable: true,
-      //   },
     };
 
     const customAttributes: Record<string, cognito.ICustomAttribute> = {
@@ -88,7 +84,9 @@ export class dt_api extends Construct {
     };
 
     let emailConfig: cognito.UserPoolEmail;
-    if (props.webUiCustomDomain) {
+    // If sourceGitBranch variable includes the word "prod", set emailConfig to use .withSES, else set it to use .withCognito
+
+    if (props.webUiCustomDomain || sourceGitBranch.includes("prod")) {
       emailConfig = cognito.UserPoolEmail.withSES({
         // sourceArn: `arn:aws:ses:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:identity/${props.webUiCustomDomain}`,
         sesVerifiedDomain: props.webUiCustomDomain,

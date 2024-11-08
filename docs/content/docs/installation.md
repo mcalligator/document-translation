@@ -67,7 +67,7 @@ All fields in this section are required for all features you decide to enable.
 </div>
 <div>
 	<label for="sourceGitBranch">Branch Name</label>
-	<input type="text" name="sourceGitBranch" placeholder="mt-prod" value="mt-prod" required/>
+	<input type="text" name="sourceGitBranch" placeholder="mt-test" value="mt-test" required/>
 </div>
 </fieldset>
 
@@ -128,7 +128,7 @@ Enable and configure the features you wish to deploy.
 <fieldset>
 <div class="isForCustomDomain" style="display: none;">
 	<label for="customDomainName">Domain Name</label>
-	<input class="requiredForCustomDomain" type="text" name="customDomainName" placeholder="document-translation.business.com" required/>
+	<input class="requiredForCustomDomain" type="text" name="customDomainName" placeholder="test.ctx-translate.cloud" required/>
 </div>
 <div class="isForCustomDomain" style="display: none;">
 	<label for="customDomainCert">Certificate ARN</label>

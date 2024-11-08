@@ -8,19 +8,17 @@ import { pipelineStack } from "../lib/pipeline-stack";
 // ENVIRONMENT VARIABLES
 // ENVIRONMENT VARIABLES | GITHUB REPO
 const sourceGitBranch: string =
-	process.env.sourceGitBranch !== undefined
-		? process.env.sourceGitBranch
-		: "main";
+  process.env.sourceGitBranch !== undefined ? process.env.sourceGitBranch : "mt-test";
 
 const app = new cdk.App();
 const stackName = `DocTran-${sourceGitBranch}-pipeline`;
 new pipelineStack(app, `${stackName}`, {
-	stackName: `${stackName}`,
-	description: `(uksb-1tthgi813) (tag:pipeline)`,
-	env: {
-		account: app.account,
-		region: app.region,
-	},
+  stackName: `${stackName}`,
+  description: `(uksb-1tthgi813) (tag:pipeline)`,
+  env: {
+    account: app.account,
+    region: app.region,
+  },
 });
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));

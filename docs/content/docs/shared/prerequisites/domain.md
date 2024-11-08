@@ -17,7 +17,7 @@ This step is **conditional**.
 
 A custom domain allows you to specify an appropriate URL for the deployment. The default URL provided by AWS Cloudfront has a structure of `abcdefg1234567.cloudfront.net`. A custom domain allows you to specify a more user-friendly URL such as `ctx-translate.cloud`.
 
-A TLS certificate is required for the custom domain. The required certificate for the `ctx-translate.cloud` domain has been added to the Production CTX AWS Account (`471112910241`) in the `us-west-1` region. Any other deployments using different domains will require a corresponding certificate.
+A TLS certificate is required for the custom domain. The required certificate for the `ctx-translate.cloud` domain has been added to the Production CTX AWS Account (`471112910241`) in the `us-east-1` region. Any other deployments using different domains will require a corresponding certificate in that deployment's AWS account.
 
 - [AWS Certificate Manager (ACM)](https://us-east-1.console.aws.amazon.com/acm/home?region=us-east-1#/certificates/request)
 
@@ -30,7 +30,7 @@ The following should be performed at installation. These values are not persiste
 ```shell
 # E.g.
 # export webUiCustomDomain="ctx-translate.cloud"
-# export webUiCustomDomain="ctx-translate-test.cloud"
+# export webUiCustomDomain="test.ctx-translate.cloud"
 export webUiCustomDomain=""
 #
 # E.g.

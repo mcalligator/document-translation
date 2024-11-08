@@ -7,38 +7,34 @@ import { AwsSolutionsChecks } from "cdk-nag";
 import { DocTranStack } from "./doctran-stack";
 
 export class DocTranAppStage extends cdk.Stage {
-	// OUTPUTS
-	public readonly appStackId: cdk.CfnOutput;
-	public readonly appStackName: cdk.CfnOutput;
-	public readonly appWebsiteS3Bucket: cdk.CfnOutput;
-	public readonly appWebsiteDistribution: cdk.CfnOutput;
-	public readonly awsAppsyncId: cdk.CfnOutput;
+  // OUTPUTS
+  public readonly appStackId: cdk.CfnOutput;
+  public readonly appStackName: cdk.CfnOutput;
+  public readonly appWebsiteS3Bucket: cdk.CfnOutput;
+  public readonly appWebsiteDistribution: cdk.CfnOutput;
+  public readonly awsAppsyncId: cdk.CfnOutput;
 
-	constructor(scope: Construct, id: string, props?: cdk.StageProps) {
-		super(scope, id, props);
+  constructor(scope: Construct, id: string, props?: cdk.StageProps) {
+    super(scope, id, props);
 
-		// ENVIRONMENT VARIABLES
-		// ENVIRONMENT VARIABLES | GITHUB REPO
-		const sourceGitBranch: string =
-			process.env.sourceGitBranch !== undefined
-				? process.env.sourceGitBranch
-				: "main";
+    // ENVIRONMENT VARIABLES
+    // ENVIRONMENT VARIABLES | GITHUB REPO
+    const sourceGitBranch: string =
+      process.env.sourceGitBranch !== undefined ? process.env.sourceGitBranch : "mt-test";
 
-		const stackName = `DocTran-${sourceGitBranch}-app`;
-		const docTranStackInstance = new DocTranStack(this, `${stackName}`, {
-			stackName: `${stackName}`,
-			description: `(uksb-1tthgi813) (tag:app)`,
-		});
+    const stackName = `DocTran-${sourceGitBranch}-app`;
+    const docTranStackInstance = new DocTranStack(this, `${stackName}`, {
+      stackName: `${stackName}`,
+      description: `(uksb-1tthgi813) (tag:app)`,
+    });
 
-		cdk.Aspects.of(docTranStackInstance).add(
-			new AwsSolutionsChecks({ verbose: true }),
-		);
+    cdk.Aspects.of(docTranStackInstance).add(new AwsSolutionsChecks({ verbose: true }));
 
-		// OUTPUTS
-		this.appStackId = docTranStackInstance.appStackId;
-		this.appStackName = docTranStackInstance.appStackId;
-		this.appWebsiteS3Bucket = docTranStackInstance.appWebsiteS3Bucket;
-		this.appWebsiteDistribution = docTranStackInstance.appWebsiteDistribution;
-		this.awsAppsyncId = docTranStackInstance.awsAppsyncId;
-	}
+    // OUTPUTS
+    this.appStackId = docTranStackInstance.appStackId;
+    this.appStackName = docTranStackInstance.appStackId;
+    this.appWebsiteS3Bucket = docTranStackInstance.appWebsiteS3Bucket;
+    this.appWebsiteDistribution = docTranStackInstance.appWebsiteDistribution;
+    this.awsAppsyncId = docTranStackInstance.awsAppsyncId;
+  }
 }
