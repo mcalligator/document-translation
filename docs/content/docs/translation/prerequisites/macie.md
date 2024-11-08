@@ -13,7 +13,7 @@ This step is **conditional**.
 
 - If you intend to use the PII detection features this step is **required**.
 - If not this step can be **skipped**.
-  {{< /callout >}}
+{{< /callout >}}
 
 This project is able to perform PII detection on uploaded files with the use of Amazon Macie. Where PII is detected within file they are tagged `PII: True` and a separate S3 Lifecycle policy is associated with the tag.
 

@@ -12,6 +12,6 @@ SPDX-License-Identifier: MIT-0
 Before performing the installation, there are important steps to review and optionally complete.
 
 {{< cards >}}
-{{< card link="ai-services" title="AI Services" >}}
-{{< card link="macie" title="Amazon Macie" >}}
+  {{< card link="ai-services" title="AI Services" >}}
+  {{< card link="macie" title="Amazon Macie" >}}
 {{< /cards >}}

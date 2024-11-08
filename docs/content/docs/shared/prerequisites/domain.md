@@ -13,7 +13,7 @@ This step is **conditional**.
 
 - If you intend to use a custom domain/URL this step is **required**.
 - If not this step can be **skipped**.
-  {{< /callout >}}
+{{< /callout >}}
 
 A custom domain allows you to specify an appropriate URL for the deployment. The default URL provided by AWS Cloudfront has a structure of `abcdefg1234567.cloudfront.net`. A custom domain allows you to specify a more user-friendly URL such as `ctx-translate.cloud`.
 
