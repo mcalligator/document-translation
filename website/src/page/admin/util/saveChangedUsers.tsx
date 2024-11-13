@@ -1,14 +1,14 @@
 import cfnOutputs from "../../../cfnOutputs.json";
 
+
+
 import { ManageUsersError } from "./classes";
 import { Credentials, UserData } from "./typeExtensions";
 
-import {
-  InvokeCommand,
-  InvokeCommandInput,
-  InvokeCommandOutput,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+
+
+import { InvokeCommand, InvokeCommandInput, InvokeCommandOutput, LambdaClient } from "@aws-sdk/client-lambda";
+
 
 export default async function saveChangedUsers(
   changedUsers: UserData[],
@@ -49,7 +49,7 @@ export default async function saveChangedUsers(
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse: InvokeCommandOutput = await lambdaClient.send(lambdaInvokeCommand);
     const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
-    console.log(
+    console.debug(
       `Lambda invocation response payload in saveChangedUsers:\n${JSON.stringify(responsePayload)}`
     );
     switch (responsePayload.statusCode) {
@@ -57,7 +57,7 @@ export default async function saveChangedUsers(
         usersUpdated.length > 1 ? (response.message = "Users") : (response.message = "User");
         response.message += " successfully updated";
         response.usersUpdated = responsePayload.body;
-        console.log(`Users updated:\n`);
+        console.debug(`Users updated:\n`);
         console.table(usersUpdated);
         return response;
       case 403:

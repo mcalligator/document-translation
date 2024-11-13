@@ -81,7 +81,7 @@ export default function NewForm() {
 			const authSession = await fetchAuthSession();
 			identityId = authSession.identityId;
 		} catch (error) {
-			console.log("Error fetching identityId:", error);
+			console.error("Error fetching identityId:", error);
 		}
 		try {
 			await putObjectS3({
@@ -89,7 +89,7 @@ export default function NewForm() {
 				file: file,
 			});
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	};
 
@@ -159,7 +159,7 @@ export default function NewForm() {
 			}));
 			navigate("/translation/history");
 		} catch (error) {
-			console.log("Error uploading job info");
+			console.error("Error uploading job info");
 			throw error;
 		}
 	}

@@ -20,6 +20,6 @@ export async function getPresignedUrl(props: Props) {
 		});
 		return result.url.href;
 	} catch (error) {
-		console.log("Error getting URL:", error);
+		console.error("Error getting URL:", error);
 	}
 }

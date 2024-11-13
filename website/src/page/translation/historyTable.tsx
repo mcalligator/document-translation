@@ -141,7 +141,7 @@ export default function HistoryTable() {
 				window.open(presignedUrl, "_blank", "noopener,noreferrer");
 			}
 		} catch (err) {
-			console.log("error: ", err);
+			console.error("error: ", err);
 		}
 	}
 

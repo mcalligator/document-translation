@@ -38,13 +38,13 @@ function parseS3Key(key: string): KeyDetails {
 }
 
 export function describeS3Key(props: Props): KeyDetails {
-	console.log("describeS3Key", props.key);
+	console.debug("describeS3Key", props.key);
 	if (!isValidS3Key(props.key)) {
 		throw new Error(
 			`Invalid S3 key format: "${props.key}". Expect: "${expect}"`
 		);
 	}
-	console.log("describeS3Key isValid");
+	console.debug("describeS3Key isValid");
 
 	return parseS3Key(props.key);
 }

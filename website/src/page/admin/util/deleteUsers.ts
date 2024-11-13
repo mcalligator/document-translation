@@ -1,20 +1,22 @@
 import cfnOutputs from "../../../cfnOutputs.json";
 
+
+
 import { Credentials, DeleteUsersOutcome, UserData } from "./typeExtensions";
 
-import {
-  InvokeCommand,
-  InvokeCommandInput,
-  InvokeCommandOutput,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
+
+
+import { InvokeCommand, InvokeCommandInput, InvokeCommandOutput, LambdaClient } from "@aws-sdk/client-lambda";
+
 
 export default async function deleteUsers(
   rowsForDeletion: Set<string>,
   adminCredentials: Credentials,
   tenantId: string
 ): Promise<DeleteUsersOutcome> {
-  console.log("Actual set of users to be deleted: " + JSON.stringify(Array.from(rowsForDeletion))); // Delete after debugging
+  console.debug(
+    "Actual set of users to be deleted: " + JSON.stringify(Array.from(rowsForDeletion))
+  ); // Delete after debugging
   let response = { message: "", details: "", usersDeleted: new Set<string>() };
 
   const lambdaFunctionName = cfnOutputs.manageUsersFunctionName;
@@ -44,11 +46,11 @@ export default async function deleteUsers(
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse: InvokeCommandOutput = await lambdaClient.send(lambdaInvokeCommand);
     const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
-    console.log(
+    console.debug(
       `Lambda invocation response payload in deleteUsers:\n${JSON.stringify(responsePayload)}`
     );
     const usersDeleted: Array<string> = responsePayload.body.usersDeleted;
-    console.log(`Users deleted:\n${JSON.stringify(usersDeleted)}`);
+    console.debug(`Users deleted:\n${JSON.stringify(usersDeleted)}`);
 
     response.message = responsePayload.body.message;
     response.details = responsePayload.body.details;

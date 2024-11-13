@@ -1,11 +1,18 @@
 import "./adminStyles.css";
 import "@cloudscape-design/global-styles/index.css";
 
+
+
 import React, { ChangeEvent, useEffect, useState } from "react";
+
+
 
 import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
+
+
 import { ColumnDefinition, UserData } from "./util/typeExtensions";
+
 
 interface UserRowProps {
   user: UserData;
@@ -25,8 +32,8 @@ export default function UserRow({
   const [userDetails, setUserDetails] = useState<UserData>(user);
   const [deleteChecked, setDeleteChecked] = useState(false); // Local state for Delete User tickbox
   const [fieldValidity, setFieldValidity] = useState(true);
-  // console.log("deleteChecked rendered with box ticked " + deleteChecked);
-  // console.log("Displaying details for user " + JSON.stringify(userDetails));
+  console.debug("deleteChecked rendered with box ticked " + deleteChecked);
+  console.debug("Displaying details for user " + JSON.stringify(userDetails));
 
   useEffect(() => {
     // Required to make userRow component re-render when ancestor components do
@@ -38,7 +45,7 @@ export default function UserRow({
     /*
     Updates field content with text typed, and resizes it appropriately
     */
-    // console.log("handleChange - value before change: " + JSON.stringify(userDetails)); // <-- Delete after debugging
+    console.debug("handleChange - value before change: " + JSON.stringify(userDetails)); // <-- Delete after debugging
     let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
     const currentColumn = fields.find((col) => col.name === e.target.name);
     const minWidth = currentColumn?.minWidth || 0;
@@ -51,7 +58,7 @@ export default function UserRow({
       } else {
         if (e.target.value === user[fieldName]) {
           // Has value reverted to that persisted in the identity store?
-          // console.log(fieldName + " has reverted");
+          console.debug(fieldName + " has reverted");
           userCopy.isChanged = false;
           userCopy.isValid = true;
         }
@@ -61,14 +68,14 @@ export default function UserRow({
     const newWidth = Math.max(e.target.value.length * charWidth, minWidth);
     e.target.style.width = `${newWidth}px`;
 
-    // console.log(" handleChange - previous value of user: " + JSON.stringify(userCopy));  // <-- Delete after debugging
+    console.debug(" handleChange - previous value of user: " + JSON.stringify(userCopy));  // <-- Delete after debugging
     userCopy[fieldName] = e.target.value;
-    // console.log(" handleChange - Updated value of user: " + JSON.stringify(userCopy)); // <-- Delete after debugging
+    console.debug(" handleChange - Updated value of user: " + JSON.stringify(userCopy)); // <-- Delete after debugging
     setUserDetails(userCopy);
   }
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    // console.log("handleBlur - user: " + JSON.stringify(userDetails));
+    console.debug("handleBlur - user: " + JSON.stringify(userDetails));
     let userCopy: UserData = Object.assign({}, userDetails); // Local shadow variable for current user
     const fieldName = e.target.name;
     reportStatus(""); // Clear any existing status message
@@ -77,7 +84,7 @@ export default function UserRow({
       userCopy.isValid = true;
       setFieldValidity(true);
       setUserDetails(userCopy);
-      // console.log(" handleBlur - updated user: " + JSON.stringify(userDetails));
+      console.debug(" handleBlur - updated user: " + JSON.stringify(userDetails));
       updateUserSetWithChanges(userCopy); // Not sure this is ideal: updates users array (and hence re-renders) every time focus leaves any field in any userRow
       // To do: Change field's background colour to light orange indicating it needs to be saved
     } else {
@@ -89,7 +96,7 @@ export default function UserRow({
   }
 
   function validateChanges(fieldName: string | undefined, value: string) {
-    // console.log("Validating changes for " + fieldName);
+    console.debug("Validating changes for " + fieldName);
     if (fieldName === "email") {
       const matchPattern = /[a-zA-Z0-9.]@(\S)+\.\D/;
       // If entry matches regex, return true, otherwise return error message
@@ -105,9 +112,9 @@ export default function UserRow({
 
   const handleDeleteToggle: CheckboxProps["onChange"] = (e) => {
     const checked = e.detail.checked;
-    // console.log("Toggle button clicked; value now " + checked);
+    console.debug("Toggle button clicked; value now " + checked);
     setDeleteChecked(checked);
-    // console.log("deleteChecked set to " + deleteChecked);
+    console.debug("deleteChecked set to " + deleteChecked);
     // Enable or disable the Delete User button when checkbox at end of row clicked
     deleteToggleChanges(userDetails);
   };

@@ -1,15 +1,17 @@
 import { ColumnDefinition, Credentials } from "./typeExtensions";
 
+
+
 import { InvokeCommand, InvokeCommandInput, LambdaClient } from "@aws-sdk/client-lambda";
 
+
 export function checkAdmin(user: any) {
-  // console.log(`User passed into checkAdmin:\n${JSON.stringify(user)}`);
-  // const propertyPath: string = "[cognito:groups]";
+  console.debug(`User passed into checkAdmin:\n${JSON.stringify(user)}`);
   if (isInAdminGroup(user, "cognito:groups", "TenantAdmins")) {
-    // console.log(`User is an admin`);
+    console.debug(`User is an admin`);
     return true;
   } else {
-    // console.log(`User is not an admin`);
+    console.debug(`User is not an admin`);
     return false;
   }
 }
@@ -20,7 +22,7 @@ function isInAdminGroup(userObject: any, groupsProperty: string, adminGroup: str
   if (typeof userObject === "object") {
     if (groupsProperty in userObject) {
       if (userObject[groupsProperty].includes(adminGroup)) {
-        // console.log(`User is a member of ${adminGroup}`);
+        console.debug(`User is a member of ${adminGroup}`);
         return true;
       } else {
         return false;
@@ -90,14 +92,14 @@ export async function getEntitlement(
   };
 
   try {
-    // console.log(`Getting entitlement for tenant ${tenantId}`);
+    console.debug(`Getting entitlement for tenant ${tenantId}`);
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse = await lambdaClient.send(lambdaInvokeCommand);
     const entitlementResponse: Entitlement = JSON.parse(
       new TextDecoder().decode(lambdaInvokeResponse.Payload)
     );
 
-    // console.log(`Entitlement response:\n${JSON.stringify(entitlementResponse)}`);
+    console.debug(`Entitlement response:\n${JSON.stringify(entitlementResponse)}`);
 
     return {
       subscriptionStatus: entitlementResponse.subscriptionStatus,

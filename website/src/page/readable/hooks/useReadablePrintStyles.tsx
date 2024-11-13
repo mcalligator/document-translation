@@ -45,7 +45,7 @@ export const UseReadablePrintStyles = () => {
 				}
 				// setLoading(false);
 			} catch (error) {
-				console.log("Error fetching printStyles:", error);
+				console.error("Error fetching printStyles:", error);
 				// setError(error);
 				// setLoading(false);
 			}
@@ -68,7 +68,7 @@ export const UseReadablePrintStyles = () => {
 				);
 			}
 		} catch (error) {
-			console.log("Error setPrintStyleOptions:", error);
+			console.error("Error setPrintStyleOptions:", error);
 			// setError(error);
 			// setLoading(false);
 		}
@@ -100,7 +100,7 @@ export const UseReadablePrintStyles = () => {
 				}
 			}
 		} catch (error) {
-			console.log("Error setPrintStyleInitial:", error);
+			console.error("Error setPrintStyleInitial:", error);
 		}
 	}, [printStylesState]);
 

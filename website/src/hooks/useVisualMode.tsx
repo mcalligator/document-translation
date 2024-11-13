@@ -27,10 +27,10 @@ export function useVisualMode() {
 				if (mode) {
 					setVisualMode(mode);
 				} else {
-					console.log("Error fetching preferences: visualMode does not exist.");
+					console.error("Error fetching preferences: visualMode does not exist.");
 				}
 			} catch (error) {
-				console.log("Error fetching preferences:", error);
+				console.error("Error fetching preferences:", error);
 			}
 		}
 		getPreferences();
@@ -69,7 +69,7 @@ export function useVisualMode() {
 						},
 					});
 				} catch (error) {
-					console.log("Error updating preferences:", error);
+					console.error("Error updating preferences:", error);
 				}
 			}
 			savePreferences();

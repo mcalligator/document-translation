@@ -4,11 +4,18 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
+
+
 import { IconProps, TopNavigation } from "@cloudscape-design/components";
+
+
 
 import { useVisualMode } from "../../hooks/useVisualMode";
 
+
+
 import { VisualModes } from "../../enums";
+
 
 function getLogo() {
   const fileExtensions = ["png", "svg"];
@@ -34,13 +41,12 @@ export default function Header(user: string) {
   const navigate = useNavigate();
   const [visualMode, setVisualMode] = useVisualMode();
 
-  // console.log(`user passed in to topNavigation: ${JSON.stringify(user)}`);
-  // console.log(`Type of data passed in to topNavigation: ${typeof user}`);
-  // console.log(`Keys of user object passed in to topNavigation: ${Object.keys(user)}`);
-  // console.log(`Number of keys in topNavigation's user object: ${Object.keys.length}`);
-  // console.log(`Values of user object passed in to topNavigation: ${Object.values(user)}`);
-  //   const username = user?.user?.currentUser?.username;
-  //   const username = JSON.stringify(user);
+  console.debug(`user passed in to topNavigation: ${JSON.stringify(user)}`);
+  console.debug(`Type of data passed in to topNavigation: ${typeof user}`);
+  console.debug(`Keys of user object passed in to topNavigation: ${Object.keys(user)}`);
+  console.debug(`Number of keys in topNavigation's user object: ${Object.keys.length}`);
+  console.debug(`Values of user object passed in to topNavigation: ${Object.values(user)}`);
+
   const username = Object.values(user).toString();
 
   const displayVisualModeIcon = () => {

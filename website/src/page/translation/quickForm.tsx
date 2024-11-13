@@ -2,27 +2,26 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
+
+
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FcFinePrint } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 
-import {
-	Button,
-	Container,
-	Form,
-	FormField,
-	Grid,
-	Header,
-	Select,
-	SpaceBetween,
-	Textarea,
-} from "@cloudscape-design/components";
+
+
+import { Button, Container, Form, FormField, Grid, Header, Select, SpaceBetween, Textarea } from "@cloudscape-design/components";
 import CopyToClipboard from "@cloudscape-design/components/copy-to-clipboard";
+
+
 
 import { Predictions } from "@aws-amplify/predictions";
 
+
+
 import { amplifyConfigureAppend } from "../../util/amplifyConfigure";
+
 
 const cfnOutputs = require("../../cfnOutputs.json");
 interface Item {
@@ -41,7 +40,7 @@ export default function QuickForm() {
 	const [loading, setLoading] = useState<boolean>(false);
 
 	function onChangeLanguageSource(selected: Item) {
-		console.log(selected);
+		console.debug(selected);
 		updateSelectedTarget(selected);
 	}
 
@@ -73,7 +72,7 @@ export default function QuickForm() {
 				setLoading(false);
 			})
 
-			.catch((err) => console.log({ err }));
+			.catch((err) => console.error({ err }));
 	};
 
 	return (

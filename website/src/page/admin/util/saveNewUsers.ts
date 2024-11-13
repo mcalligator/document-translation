@@ -53,7 +53,7 @@ export default async function saveNewUsers(
       const lambdaInvokeResponse: InvokeCommandOutput =
         await lambdaClient.send(lambdaInvokeCommand);
       const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
-      console.log(
+      console.debug(
         `Lambda invocation response payload in saveNewUsers:\n${JSON.stringify(responsePayload)}`
       );
       switch (responsePayload.statusCode) {
@@ -77,7 +77,7 @@ export default async function saveNewUsers(
           console.error(`Error logged in saveNewUsers(): ${response.message} ${response.details}`);
           throw new ManageUsersError(response.message, response.details);
         default:
-          console.log(
+          console.error(
             `Status Code ${responsePayload.statusCode}: failed to create users for reasons unknown`
           );
           throw new ManageUsersError(
@@ -87,7 +87,7 @@ export default async function saveNewUsers(
       }
     } catch (error) {
       if (error instanceof ManageUsersError) {
-        console.log(`${error.message}: ${error.details}`);
+        console.error(`${error.message}: ${error.details}`);
         throw error;
       } else {
         console.error(`Unknown error in saveNewUsers(): ${JSON.stringify(error)}`);

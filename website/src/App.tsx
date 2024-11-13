@@ -3,25 +3,34 @@
 import React from "react";
 import { Suspense } from "react";
 
+
+
 import { AppLayout } from "@cloudscape-design/components";
 
+
+
 import { useFederatedSignIn } from "./hooks/useFederatedSignIn";
+
+
 
 import { extractField } from "./page/admin/util/adminUtils";
 import { amplifyConfigure } from "./util/amplifyConfigure";
 import "./util/i18n";
+
+
 
 import AppRoutes from "./appRoutes";
 import Footer from "./page/partial/footer";
 import SideNavigation from "./page/partial/sideNavigation";
 import TopNavigation from "./page/partial/topNavigation";
 
+
 export default function App() {
   amplifyConfigure();
   const currentUser = useFederatedSignIn();
-  // console.log(`currentUser in App:\n${JSON.stringify(currentUser)}`);
+  console.debug(`currentUser in App:\n${JSON.stringify(currentUser)}`);
   const firstName: string = extractField(currentUser, "given_name");
-  // console.log(`firstName in App: ${firstName}`);
+  console.debug(`firstName in App: ${firstName}`);
 
   return (
     <>

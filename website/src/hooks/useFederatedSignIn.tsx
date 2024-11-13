@@ -47,8 +47,5 @@ export function useFederatedSignIn() {
     setUserState(authStatus);
   }, [authStatus]);
 
-  // console.log("authStatus in useFederatedSignIn:", JSON.stringify(authStatus));
-  // console.log("currentUser in useFederatedSignIn:", JSON.stringify(currentUser));
-  // console.log("authSession in useFederatedSignIn:", JSON.stringify(authSession));
   return { currentUser, authSession };
 }

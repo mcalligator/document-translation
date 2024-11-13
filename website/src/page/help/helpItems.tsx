@@ -2,16 +2,27 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
+
+
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+
+
 import { Box, Cards, Link, SpaceBetween } from "@cloudscape-design/components";
+
+
 
 import { generateClient } from "@aws-amplify/api";
 
+
+
 import { helpListHelps as listHelps } from "../../graphql/queries";
 
+
+
 import sortDataByKey from "../../util/sortDataByKey";
+
 
 interface Item {
 	title: string;
@@ -39,9 +50,9 @@ export default function HistoryTable() {
 			try {
 				// Attempt to load user provided local data
 				data = require("../../helpData.json");
-				console.log("Loaded local data:", data);
+				console.debug("Loaded local data:", data);
 			} catch (error) {
-				console.log("No local data found.");
+				console.error("No local data found.");
 			}
 
 			if (!data) {
@@ -55,9 +66,9 @@ export default function HistoryTable() {
 						data = response.data.listHelps?.items || null;
 					}
 
-					console.log("Loaded cloud data:", data);
+					console.debug("Loaded cloud data:", data);
 				} catch (error) {
-					console.log("No cloud data found.");
+					console.error("No cloud data found.");
 				}
 			}
 
@@ -65,9 +76,9 @@ export default function HistoryTable() {
 				// Attempt to load project sample data
 				try {
 					data = require("../../sampleData/sampleHelpData.json");
-					console.log("Loaded project sample data:", data);
+					console.debug("Loaded project sample data:", data);
 				} catch (error) {
-					console.log("No project sample data found.");
+					console.error("No project sample data found.");
 				}
 			}
 
@@ -77,7 +88,7 @@ export default function HistoryTable() {
 				updateFunction(dataSorted);
 				setLoading(false);
 			} else {
-				console.log("Unable to load any help data");
+				console.error("Unable to load any help data");
 			}
 		}
 		fetchData("order", "title", updateHelps);

@@ -15,7 +15,7 @@ export default function Navigation(user: any) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // console.log(`User passed into SideNavigation: ${JSON.stringify(user)}`);
+  console.debug(`User passed into SideNavigation: ${JSON.stringify(user)}`);
 
   const userIsAdmin: boolean = checkAdmin(user)!;
 

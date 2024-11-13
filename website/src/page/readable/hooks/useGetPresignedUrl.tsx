@@ -23,7 +23,7 @@ export function useGetPresignedUrl(objectKey) {
 					bucket: cfnOutputs.awsReadableS3Bucket,
 				});
 			} catch (error) {
-				console.log("error: ", error);
+				console.error("error: ", error);
 			}
 		};
 	}, []);

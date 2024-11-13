@@ -93,7 +93,7 @@ export const UseReadableModels = () => {
 
         setLoading(false);
       } catch (error) {
-        console.log("Error fetching models:", error);
+        console.error("Error fetching models:", error);
         setError(error.message);
         setLoading(false);
       }

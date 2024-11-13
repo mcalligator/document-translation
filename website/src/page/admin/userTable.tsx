@@ -66,7 +66,6 @@ export default function UserTable({
         return `${col.colRef.current!.offsetWidth}px`;
       });
       const columnDefs = `${gridColumns.join(" ")}`;
-      // console.log(`Column Widths: ${columnDefs}`);
       tableElement!.current!.style.gridTemplateColumns = columnDefs;
     },
     [activeIndex, columnSet]
@@ -89,7 +88,6 @@ export default function UserTable({
   }, [activeIndex, mouseMove, mouseUp, removeListeners]);
 
   const mouseDown = (e: MouseEvent, index: number) => {
-    // console.log(`MouseDown at ${e.clientX}`);
     setActiveIndex(index);
   };
 
@@ -114,9 +112,6 @@ export default function UserTable({
         </thead>
         <tbody>
           {users.map((user: UserData) => {
-            // console.log(
-            //   "User: " + user.firstName + " ID: " + user.id + " Index: " + index
-            // );
             return (
               <tr key={user.id}>
                 <UserRow

@@ -2,25 +2,26 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
+
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import {
-  Box,
-  Button,
-  Container,
-  ContentLayout,
-  Grid,
-  Header,
-  SpaceBetween,
-  Toggle,
-} from "@cloudscape-design/components";
+
+
+import { Box, Button, Container, ContentLayout, Grid, Header, SpaceBetween, Toggle } from "@cloudscape-design/components";
+
+
 
 import { generateClient } from "@aws-amplify/api";
 import { fetchAuthSession } from "@aws-amplify/auth";
 
+
+
 import { UseReadableModels } from "./hooks/useReadableModels";
 import { UseReadableSubscription } from "./hooks/useReadableSubscription";
+
+
 
 import { ItemKeys, ItemStatus, ItemValues } from "./enums";
 import ReadableViewDetails from "./viewDetails";
@@ -28,6 +29,7 @@ import ReadableViewEditImage from "./viewEditImage";
 import ReadableViewEditText from "./viewEditText";
 import ReadableViewPreview from "./viewPreview";
 import ReadableViewPrintButton from "./viewPrintButton";
+
 
 const client = generateClient({ authMode: "userPool" });
 
@@ -80,7 +82,7 @@ export default function ReadableNew() {
       });
       return await result.data.readableCreateJobItem;
     } catch (error) {
-      console.log("Error creating text item:", error);
+      console.error("Error creating text item:", error);
     }
   }
 
@@ -99,7 +101,7 @@ export default function ReadableNew() {
       });
       return await result.data.readableCreateJobItem;
     } catch (error) {
-      console.log("Error creating text item:", error);
+      console.error("Error creating text item:", error);
     }
   }
 
@@ -138,14 +140,14 @@ export default function ReadableNew() {
       await updateNewTextItem(newItem.itemId);
       // appendTextItemToState(newItem);
     } catch (error) {
-      console.log("Error appending text item:", error);
+      console.error("Error appending text item:", error);
     }
   }
   async function appendImageRow(textItem, index) {
     let newItemIndexOrder = 0;
     const parentId = textItem.itemId;
 
-    console.log("appendImageRow parentId", parentId);
+    console.debug("appendImageRow parentId", parentId);
     if (imageState[parentId]) {
       newItemIndexOrder = imageState[parentId].length;
     }
@@ -155,7 +157,7 @@ export default function ReadableNew() {
       updateNewImageItem(newItem.itemId);
       // appendTextItemToState(newItem);
     } catch (error) {
-      console.log("Error appending text item:9 ", error);
+      console.error("Error appending text item:9 ", error);
     }
   }
 
@@ -293,7 +295,7 @@ export default function ReadableNew() {
   }
 
   function setViewState(id, value) {
-    console.log("setChecked", id, value);
+    console.error("setChecked", id, value);
     setItemViewState({
       ...itemViewState,
       [id]: {

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT-0
 import { useCallback, useEffect, useState } from "react";
 
-import {
-	CONNECTION_STATE_CHANGE,
-	ConnectionState,
-	generateClient,
-} from "@aws-amplify/api";
+
+
+import { CONNECTION_STATE_CHANGE, ConnectionState, generateClient } from "@aws-amplify/api";
+
+
 
 // import { Hub } from "@aws-amplify/utils";
 import { getPageJobId } from "../../../util/getPageJobId";
@@ -14,7 +14,10 @@ import { orderArrayByKey } from "../../../util/orderArrayByKey";
 import { returnArrayOfType } from "../../../util/returnArrayOfType";
 import { groupItemsByParent } from "../util/groupItemsByParent";
 
+
+
 import { ItemKeys, ItemValues } from "../enums";
+
 
 const client = generateClient({ authMode: "userPool" });
 
@@ -48,7 +51,7 @@ export const UseReadableSubscription = (
 				},
 			});
 		} catch (error) {
-			console.log("Error fetching job:", error);
+			console.error("Error fetching job:", error);
 		}
 	}
 
@@ -130,9 +133,9 @@ export const UseReadableSubscription = (
 
 		function setNewImageStateValues(newItem, possibleKeys) {
 			setImageState((prevState) => {
-				console.log("setNewImageStateValues newItem", newItem);
+				console.debug("setNewImageStateValues newItem", newItem);
 				const parentId = newItem.parent;
-				console.log("setNewImageStateValues parentId", parentId);
+				console.debug("setNewImageStateValues parentId", parentId);
 				const newState = { ...prevState };
 
 				// Create an empty parent if it doesn't exist yet.
@@ -189,7 +192,7 @@ export const UseReadableSubscription = (
 			} else if (item.itemId === ItemValues.METADATA) {
 				setNewMetadataStateValues(item, possibleUpdateKeysForMetadata);
 			} else {
-				console.log(
+				console.error(
 					"handleNewDataFromSubscription item.type not determined",
 					item
 				);

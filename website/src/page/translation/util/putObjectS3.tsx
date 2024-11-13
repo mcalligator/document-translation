@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: MIT-0
 import { uploadData } from "@aws-amplify/storage";
 
+
+
 import { configureS3Bucket } from "../../../util/configureS3Bucket";
+
 
 interface Props {
 	path: string;
@@ -16,8 +19,8 @@ export async function putObjectS3(props: Props) {
 			path: props.path,
 			data: props.file,
 		}).result;
-		console.log("putObjectS3 | result:", result);
+		console.debug("putObjectS3 | result:", result);
 	} catch (error) {
-		console.log("Error uploading object:", error);
+		console.error("Error uploading object:", error);
 	}
 }

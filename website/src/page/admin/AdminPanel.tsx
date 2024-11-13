@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
+
+
 import cfnOutputs from "../../cfnOutputs.json";
+
+
 
 import React, { useEffect, useState } from "react";
 
-import {
-  Box,
-  Button,
-  Container,
-  ContentLayout,
-  Form,
-  Header,
-  SpaceBetween,
-} from "@cloudscape-design/components";
+
+
+import { Box, Button, Container, ContentLayout, Form, Header, SpaceBetween } from "@cloudscape-design/components";
+
+
 
 import { Entitlement, getEntitlement } from "./util/adminUtils";
 import { extractField } from "./util/adminUtils";
@@ -25,7 +25,10 @@ import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
 import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
 
+
+
 import UserTable from "./userTable";
+
 
 export default function AdminPanel(currentUser: any) {
   /* To do:
@@ -46,7 +49,7 @@ export default function AdminPanel(currentUser: any) {
   const [rowsToDelete, setrowsToDelete] = useState(new Set<string>());
   const [disableDeleteButton, setDisableDeleteButton] = useState(true);
 
-  // console.log(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
+  console.debug(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
 
   useEffect(() => {
     setAdminCredentials(extractField(currentUser, "credentials"));
@@ -60,14 +63,14 @@ export default function AdminPanel(currentUser: any) {
         try {
           const retrievedUsers = await retrieveUsers(adminCredentials!, tenantId);
           if (retrievedUsers.length > 0) {
-            // console.log(`Users returned to fetchUsers in AdminPanel:`);
-            // console.table(retrievedUsers);
+            console.debug(`Users returned to fetchUsers in AdminPanel:`);
+            console.debug(retrievedUsers);
             setUsers(retrievedUsers);
 
             const originalUsersLocal = structuredClone(retrievedUsers);
             setOriginalUsers(originalUsersLocal); // To enable changes to be reverted before saving
           } else {
-            console.log("No users returned");
+            console.debug("No users returned");
             setUsers([]);
             setOriginalUsers([]);
           }
@@ -90,9 +93,7 @@ export default function AdminPanel(currentUser: any) {
       if (adminCredentials && !entitlementFetched) {
         // Only attempt if adminCredentials have been obtained and Entitlement not yet obtained
         try {
-          console.log(
-            `Fetching subscription status for tenant ${tenantId} using credentials ${JSON.stringify(adminCredentials)}`
-          );
+          console.debug(`Fetching subscription status for tenant ${tenantId}`);
           const entitlement = await getEntitlement(
             cfnOutputs.entitlementFunctionName,
             adminCredentials,
@@ -197,7 +198,7 @@ export default function AdminPanel(currentUser: any) {
 
       if (changedUsers.length > 0) {
         try {
-          // console.log(`${changedUsers.length} users updated`);
+          console.debug(`${changedUsers.length} users updated`);
           const saveChangedUsersOutcome = await saveChangedUsers(changedUsers, adminCredentials!);
           if (saveChangesOutcome.length > 0) saveChangesOutcome += "; "; // To concatenate outcomes from both operations
           saveChangesOutcome += saveChangedUsersOutcome.message;
@@ -236,7 +237,7 @@ export default function AdminPanel(currentUser: any) {
         setOriginalUsers(usersCopy); // Now that changes successfully applied, ensure local state cannot be reverted out of sync with back end
         reportStatus("Changes written successfully to the Identity Store");
       } else if (newUsers.length > 0 || changedUsers.length > 0) {
-        console.log(`Current user set before setUsers():`);
+        console.debug(`Current user set before setUsers():`);
         console.table(usersCopy);
         setUsers(usersCopy);
         setOriginalUsers(structuredClone(usersCopy));
@@ -252,7 +253,6 @@ export default function AdminPanel(currentUser: any) {
   function deleteToggleChanges(user: UserData) {
     let tempUsers = rowsToDelete; // Local shadow variable for users to be deleted
     if (rowsToDelete.has(user.id)) {
-      // console.log("  User ID IS in the list, so needs to be removed"); // Delete after debugging
       tempUsers.delete(user.id); // Remove user from set (not id property from user)
       setrowsToDelete(tempUsers);
     } else {
@@ -269,8 +269,8 @@ export default function AdminPanel(currentUser: any) {
         adminCredentials!,
         tenantId
       );
-      // console.log("User set before deletion:");
-      // console.table(users);
+      console.debug("User set before deletion:");
+      console.debug(users);
       let usersCopy = [...users]; // Temporary local variable to shadow component state
       for (const deletedUserId of deleteUsersOutcome.usersDeleted) {
         usersCopy.splice(
@@ -280,8 +280,8 @@ export default function AdminPanel(currentUser: any) {
           1
         );
       }
-      // console.log("Shadow user set after deletion:");
-      // console.table(usersCopy);
+      console.debug("Shadow user set after deletion:");
+      console.debug(usersCopy);
       reportStatus(deleteUsersOutcome.message);
       setUsers(usersCopy);
       setOriginalUsers(usersCopy); // Now that user(s) successfully deleted, ensure local state cannot be reverted out of sync with back end
