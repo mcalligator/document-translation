@@ -4,9 +4,16 @@
 import {
   CognitoIdentityProviderClient,
   ListUsersCommand,
+  ListUsersCommandOutput,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { UserData } from "./typeExtensions.js";
 import filterUsers from "./filterUsers.js";
+
+interface ListUsersParams {
+  region: string;
+  UserPoolId: string;
+  PaginationToken?: string;
+}
 
 export default async function retrieveUsers(
   userPoolId: string,
@@ -17,18 +24,20 @@ export default async function retrieveUsers(
       region: process.env.AWS_REGION,
     });
     // List users
-    const listUsersParams = {
-      region: process.env.AWS_REGION,
+    const listUsersParams: ListUsersParams = {
+      region: process.env.AWS_REGION!,
       UserPoolId: userPoolId,
-      Limit: 20,
+      PaginationToken: undefined,
     };
     const listUsersCommand = new ListUsersCommand(listUsersParams);
-    const listUsersResponse = await cognitoClient.send(listUsersCommand);
-    // console.log(
-    //   `List users response:\n${JSON.stringify(listUsersResponse)}`
-    // );
-    // Bring in pagination here....
-    const retrievedUsers: UserData[] = filterUsers(listUsersResponse, tenantId);
+    let listUsersResponse: ListUsersCommandOutput;
+    const retrievedUsers: UserData[] = [];
+    do {
+      listUsersResponse = await cognitoClient.send(listUsersCommand);
+      console.debug(`Set of users returned:\n${JSON.stringify(listUsersResponse)}`);
+      retrievedUsers.push(...filterUsers(listUsersResponse, tenantId));
+      listUsersParams.PaginationToken = listUsersResponse.PaginationToken;
+    } while (listUsersResponse.PaginationToken);
     return retrievedUsers;
   } catch (error) {
     console.error("Error fetching users:", error);

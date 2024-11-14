@@ -7,12 +7,7 @@
 // 6. Return the required data from the function - DONE
 // 7. Add environment variables and event data to SAM local instance - DONE
 
-import {
-  CognitoIdentityProviderClient,
-  ListUsersCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import { Context } from "aws-lambda";
-import filterUsers from "./filterUsers.js";
 import { DeleteUsersOutcome, Event, UserData } from "./typeExtensions.js";
 import retrieveUsers from "./retrieveUsers.js";
 import deleteUsers from "./deleteUsers.js";
@@ -21,12 +16,8 @@ import { ManageUsersError } from "./classes.js";
 import updateUsers from "./updateUsers.js";
 
 export const handler = async (event: Event, context: Context) => {
-  console.log("Event: ", event);
-  console.log("Context: ", context);
-
-  const cognitoClient = new CognitoIdentityProviderClient({
-    region: process.env.AWS_REGION,
-  });
+  console.debug("Event: ", event);
+  console.debug("Context: ", context);
 
   switch (event.operation) {
     case "retrieve":
@@ -127,38 +118,5 @@ export const handler = async (event: Event, context: Context) => {
         statusCode: 405,
         body: JSON.stringify({ message: "Invalid operation" }),
       };
-  }
-
-  try {
-    // List users
-    const listUsersParams = {
-      region: process.env.AWS_REGION,
-      UserPoolId: event.userPoolId,
-      Limit: 20,
-    };
-    const listUsersCommand = new ListUsersCommand(listUsersParams);
-    const listUsersResponse = await cognitoClient.send(listUsersCommand);
-    // console.log(
-    //   `List users response:\n${JSON.stringify(listUsersResponse)}`
-    // );
-    // Bring in pagination here....
-    if (listUsersResponse.Users!.length > 0) {
-      const retrievedUsers: UserData[] = filterUsers(listUsersResponse, event.tenantId);
-      return {
-        statusCode: 200,
-        body: retrievedUsers,
-      };
-    } else {
-      return {
-        statusCode: 200,
-        body: [],
-      };
-    }
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Error fetching users" }),
-    };
   }
 };
