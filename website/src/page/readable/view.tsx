@@ -2,26 +2,25 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
-
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-
-
-import { Box, Button, Container, ContentLayout, Grid, Header, SpaceBetween, Toggle } from "@cloudscape-design/components";
-
-
+import {
+  Box,
+  Button,
+  Container,
+  ContentLayout,
+  Grid,
+  Header,
+  SpaceBetween,
+  Toggle,
+} from "@cloudscape-design/components";
 
 import { generateClient } from "@aws-amplify/api";
 import { fetchAuthSession } from "@aws-amplify/auth";
 
-
-
 import { UseReadableModels } from "./hooks/useReadableModels";
 import { UseReadableSubscription } from "./hooks/useReadableSubscription";
-
-
 
 import { ItemKeys, ItemStatus, ItemValues } from "./enums";
 import ReadableViewDetails from "./viewDetails";
@@ -29,7 +28,6 @@ import ReadableViewEditImage from "./viewEditImage";
 import ReadableViewEditText from "./viewEditText";
 import ReadableViewPreview from "./viewPreview";
 import ReadableViewPrintButton from "./viewPrintButton";
-
 
 const client = generateClient({ authMode: "userPool" });
 

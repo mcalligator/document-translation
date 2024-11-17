@@ -2,27 +2,16 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
-
-
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-
-
 import { Box, Cards, Link, SpaceBetween } from "@cloudscape-design/components";
-
-
 
 import { generateClient } from "@aws-amplify/api";
 
-
-
 import { helpListHelps as listHelps } from "../../graphql/queries";
 
-
-
 import sortDataByKey from "../../util/sortDataByKey";
-
 
 interface Item {
 	title: string;

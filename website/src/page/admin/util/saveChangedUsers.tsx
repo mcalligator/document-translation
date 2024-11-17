@@ -1,14 +1,14 @@
 import cfnOutputs from "../../../cfnOutputs.json";
 
-
-
 import { ManageUsersError } from "./classes";
 import { Credentials, UserData } from "./typeExtensions";
 
-
-
-import { InvokeCommand, InvokeCommandInput, InvokeCommandOutput, LambdaClient } from "@aws-sdk/client-lambda";
-
+import {
+  InvokeCommand,
+  InvokeCommandInput,
+  InvokeCommandOutput,
+  LambdaClient,
+} from "@aws-sdk/client-lambda";
 
 export default async function saveChangedUsers(
   changedUsers: UserData[],

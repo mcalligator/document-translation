@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: MIT-0
 import { uploadData } from "@aws-amplify/storage";
 
-
-
 import { configureS3Bucket } from "../../../util/configureS3Bucket";
-
 
 interface Props {
 	path: string;

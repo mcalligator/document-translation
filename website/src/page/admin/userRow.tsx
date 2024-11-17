@@ -1,18 +1,11 @@
 import "./adminStyles.css";
 import "@cloudscape-design/global-styles/index.css";
 
-
-
 import React, { ChangeEvent, useEffect, useState } from "react";
-
-
 
 import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
-
-
 import { ColumnDefinition, UserData } from "./util/typeExtensions";
-
 
 interface UserRowProps {
   user: UserData;

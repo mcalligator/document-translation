@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: MIT-0
 import "@cloudscape-design/global-styles/index.css";
 
-
-
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FcTodoList } from "react-icons/fc";
 
-
-
-import { Button, Checkbox, Container, FormField, Header, SpaceBetween } from "@cloudscape-design/components";
-
+import {
+	Button,
+	Checkbox,
+	Container,
+	FormField,
+	Header,
+	SpaceBetween,
+} from "@cloudscape-design/components";
 
 const languagesTarget = require("./languagesTarget.json");
 

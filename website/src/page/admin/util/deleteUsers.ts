@@ -1,13 +1,13 @@
 import cfnOutputs from "../../../cfnOutputs.json";
 
-
-
 import { Credentials, DeleteUsersOutcome, UserData } from "./typeExtensions";
 
-
-
-import { InvokeCommand, InvokeCommandInput, InvokeCommandOutput, LambdaClient } from "@aws-sdk/client-lambda";
-
+import {
+  InvokeCommand,
+  InvokeCommandInput,
+  InvokeCommandOutput,
+  LambdaClient,
+} from "@aws-sdk/client-lambda";
 
 export default async function deleteUsers(
   rowsForDeletion: Set<string>,

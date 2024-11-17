@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT-0
 import { useCallback, useEffect, useState } from "react";
 
-
-
-import { CONNECTION_STATE_CHANGE, ConnectionState, generateClient } from "@aws-amplify/api";
-
-
+import {
+	CONNECTION_STATE_CHANGE,
+	ConnectionState,
+	generateClient,
+} from "@aws-amplify/api";
 
 // import { Hub } from "@aws-amplify/utils";
 import { getPageJobId } from "../../../util/getPageJobId";
@@ -14,10 +14,7 @@ import { orderArrayByKey } from "../../../util/orderArrayByKey";
 import { returnArrayOfType } from "../../../util/returnArrayOfType";
 import { groupItemsByParent } from "../util/groupItemsByParent";
 
-
-
 import { ItemKeys, ItemValues } from "../enums";
-
 
 const client = generateClient({ authMode: "userPool" });
 

@@ -1,9 +1,6 @@
 import { ColumnDefinition, Credentials } from "./typeExtensions";
 
-
-
 import { InvokeCommand, InvokeCommandInput, LambdaClient } from "@aws-sdk/client-lambda";
-
 
 export function checkAdmin(user: any) {
   console.debug(`User passed into checkAdmin:\n${JSON.stringify(user)}`);

@@ -3,12 +3,8 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
-
-
 import { checkAdmin } from "./page/admin/util/adminUtils";
 import SignOut from "./util/signOut";
-
-
 
 import AdminPanel from "./page/admin/AdminPanel";
 import Help from "./page/help/help";
@@ -18,7 +14,6 @@ import ReadableView from "./page/readable/view";
 import TranslationHistory from "./page/translation/history";
 import TranslationNew from "./page/translation/new";
 import TranslationQuick from "./page/translation/quick";
-
 
 const features = require("./features.json");
 
