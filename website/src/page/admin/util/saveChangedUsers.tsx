@@ -14,9 +14,6 @@ export default async function saveChangedUsers(
   changedUsers: UserData[],
   adminCredentials: Credentials
 ) {
-  let usersUpdated = new Array<UserData>();
-  let responseMessage = "";
-  let responseDetails = "";
   let response = {
     message: "",
     details: "",
@@ -54,11 +51,13 @@ export default async function saveChangedUsers(
     );
     switch (responsePayload.statusCode) {
       case 200:
-        usersUpdated.length > 1 ? (response.message = "Users") : (response.message = "User");
-        response.message += " successfully updated";
         response.usersUpdated = responsePayload.body;
+        response.usersUpdated.length > 1
+          ? (response.message = "Users")
+          : (response.message = "User");
+        response.message += " successfully updated";
         console.debug(`Users updated:\n`);
-        console.table(usersUpdated);
+        console.debug(response.usersUpdated);
         return response;
       case 403:
         throw new ManageUsersError("Insufficient permissions to update users", "No users updated");
