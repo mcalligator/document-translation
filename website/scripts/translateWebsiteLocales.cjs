@@ -92,7 +92,7 @@ const allLanguages = [
 
 function createFilePath(languageCode) {
 	const filePath = "../public/locales/" + languageCode + "/translation.json";
-	console.log(filePath);
+	console.debug(filePath);
 	return filePath;
 }
 

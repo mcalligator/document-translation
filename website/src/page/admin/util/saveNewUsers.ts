@@ -63,8 +63,8 @@ export default async function saveNewUsers(
             : (response.message = "User");
           response.message += " successfully added";
           response.usersAdded = responsePayload.body;
-          console.log(`Users added:\n`);
-          console.table(response.usersAdded);
+          console.debug(`Users added:\n`);
+          console.debug(response.usersAdded);
           return response;
         case 403:
           throw new ManageUsersError(

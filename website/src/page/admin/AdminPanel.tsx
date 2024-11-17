@@ -235,7 +235,7 @@ export default function AdminPanel(currentUser: any) {
         reportStatus("Changes written successfully to the Identity Store");
       } else if (newUsers.length > 0 || changedUsers.length > 0) {
         console.debug(`Current user set before setUsers():`);
-        console.table(usersCopy);
+        console.debug(usersCopy);
         setUsers(usersCopy);
         setOriginalUsers(structuredClone(usersCopy));
         reportStatus(saveChangesOutcome);

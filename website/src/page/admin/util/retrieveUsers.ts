@@ -31,13 +31,11 @@ export default async function retrieveUsers(
   try {
     const lambdaInvokeCommand = new InvokeCommand(lambdaParams);
     const lambdaInvokeResponse = await lambdaClient.send(lambdaInvokeCommand);
-    // console.log(
-    //   `Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`
-    // );
+    console.debug(`Lambda invocation response:\n${new TextDecoder().decode(lambdaInvokeResponse.Payload)}`);
     const responsePayload = JSON.parse(new TextDecoder().decode(lambdaInvokeResponse.Payload));
     const retrievedUsers: UserData[] = responsePayload.body;
 
-    // console.log(`Users retrieved:\n${JSON.stringify(retrievedUsers)}`);
+    console.debug(`Users retrieved:\n${JSON.stringify(retrievedUsers)}`);
 
     return retrievedUsers;
   } catch (error) {
