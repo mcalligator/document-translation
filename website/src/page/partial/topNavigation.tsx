@@ -4,18 +4,11 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-
-
 import { IconProps, TopNavigation } from "@cloudscape-design/components";
-
-
 
 import { useVisualMode } from "../../hooks/useVisualMode";
 
-
-
 import { VisualModes } from "../../enums";
-
 
 function getLogo() {
   const fileExtensions = ["png", "svg"];
@@ -27,7 +20,7 @@ function getLogo() {
       logo = { src: logoSrc };
       break;
     } catch (e) {
-      // Do nothing
+      // Fail silently
     }
   }
   if (!logo.src) {
@@ -76,7 +69,7 @@ export default function Header(user: string) {
     <TopNavigation
       data-testid="topnavigation"
       identity={{
-        title: "Document Transformation",
+        // title: "Document Transformation",
         // TODO BUSINESS NAME
         logo: getLogo(),
         href: "/",
