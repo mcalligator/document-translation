@@ -13,6 +13,7 @@ import {
 } from "aws-cdk-lib";
 import { DocTranAppStage } from "./pipeline-app-stage";
 import { getSharedConfiguration } from "./shared";
+import { LogGroup } from "aws-cdk-lib/aws-logs";
 
 export class pipelineStack extends cdk.Stack {
 	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -202,6 +203,14 @@ export class pipelineStack extends cdk.Stack {
 						],
 					}),
 				],
+				logging: {
+					cloudWatch: {
+						logGroup: new LogGroup(this, "cdkPipelineLogGroup", {
+							retention: cdk.aws_logs.RetentionDays.ONE_MONTH,
+							removalPolicy: removalPolicy,
+						})
+					}
+				}
 			},
 		});
 		// PIPELINE | STAGE

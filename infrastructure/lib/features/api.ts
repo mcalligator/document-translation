@@ -568,6 +568,7 @@ export class dt_api extends Construct {
         fieldLogLevel: appsync.FieldLogLevel.ALL, // ASM-ASC3
         excludeVerboseContent: false,
         role: apiLoggingRole,
+        retention: cdk.aws_logs.RetentionDays.ONE_MONTH,
       },
       xrayEnabled: true, // ASM-SF2
     });
