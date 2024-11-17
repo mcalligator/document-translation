@@ -20,11 +20,11 @@ interface SubscriptionEvent {
 }
 
 export const handler = async (event: SubscriptionEvent) => {
-  console.log(JSON.stringify(event));
+  console.debug(JSON.stringify(event));
   const tenantId = event.tenantId;
 
   try {
-    console.log(`Assuming GetEntitlement role ${getEntitlementRoleArn} in SaaS Management AWS account`);
+    console.debug(`Assuming GetEntitlement role ${getEntitlementRoleArn} in SaaS Management AWS account`);
     const stsClient = new STSClient({ region: "us-east-1" });
     const assumeRoleCommand = new AssumeRoleCommand({
       RoleArn: getEntitlementRoleArn,
@@ -32,19 +32,16 @@ export const handler = async (event: SubscriptionEvent) => {
       DurationSeconds: 900,
     });
     const assumeRoleResponse = await stsClient.send(assumeRoleCommand);
-    // let message = 'AssumeRole command completed';
+    let message = 'AssumeRole command completed';
     let marketplaceCredentials: AssumeRoleCommandOutput["Credentials"];
     if (assumeRoleResponse) {
-      // console.log(`assumeRoleResponse:\n${JSON.stringify(assumeRoleResponse)}`);
+      console.debug(`assumeRoleResponse:\n${JSON.stringify(assumeRoleResponse)}`);
       marketplaceCredentials = assumeRoleResponse.Credentials;
-      // message += `, returning the following credentials:\n${JSON.stringify(marketplaceCredentials)}`;
-      // console.log(message);
       const entitlementParams: GetEntitlementsCommandInput = {
         ProductCode: event.productCode,
         Filter: {
           "CUSTOMER_IDENTIFIER": [tenantId],
         },
-        // CustomerIdentifier: tenantId,
       };
 
       const entitlementClient = new MarketplaceEntitlementServiceClient({
@@ -60,7 +57,7 @@ export const handler = async (event: SubscriptionEvent) => {
         entitlementParams,
       ) as GetEntitlementsCommand;
       const entitlementResponse: GetEntitlementsCommandOutput = await entitlementClient.send(entitlementCommand);
-      // console.log(`Entitlement response:\n${JSON.stringify(entitlementResponse)}`);
+      console.debug(`Entitlement response:\n${JSON.stringify(entitlementResponse)}`);
 
       if (!entitlementResponse.Entitlements || entitlementResponse.Entitlements.length === 0) {
         return { isExpired: true, userCount: 0 };
@@ -81,12 +78,11 @@ export const handler = async (event: SubscriptionEvent) => {
         userCount: entitlement ? entitlement.userCount : 0,
       };
     } else {
-      // message += ' with no credentials returned.';
-      // console.log(message);
+      message += ' with no credentials returned.';
+      console.error(message);
       throw new Error("Unable to assume role; no credentials available to get entitlement");
     }
 
-    // console.log(`Credentials used to access Marketplace Entitlement Service in Management Account:\n${JSON.stringify(marketplaceCredentials)}`);
   } catch (error) {
     console.error(`Error in handler: ${error}`);
     return {

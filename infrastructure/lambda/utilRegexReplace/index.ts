@@ -20,7 +20,7 @@ export const handler = async (event: event) => {
 	if (event.replacement) {
 		replaceValue = event.replacement;
 	} else {
-		console.log(
+		console.debug(
 			'No replacement (string) provided, defaulting to empty string ""',
 		);
 		replaceValue = "";
@@ -30,7 +30,7 @@ export const handler = async (event: event) => {
 	if (event.flags) {
 		searchValue = new RegExp(event.pattern, event.flags);
 	} else {
-		console.log("No regexp flags (string) provided, defaulting to no flag");
+		console.debug("No regexp flags (string) provided, defaulting to no flag");
 		searchValue = new RegExp(event.pattern);
 	}
 

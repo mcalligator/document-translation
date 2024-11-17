@@ -38,7 +38,7 @@ interface event {
 }
 
 export const handler = async (event: event) => {
-	console.log(JSON.stringify(event, null, 4));
+	console.debug(JSON.stringify(event, null, 4));
 
 	if (!event.ModelId) {
 		throw new Error("Missing modelId");
@@ -56,14 +56,14 @@ export const handler = async (event: event) => {
 		accept: "application/json",
 		modelId: modelId,
 	};
-	console.log("input", input);
+	console.debug("input", input);
 	const command = new InvokeModelCommand(input);
 
 	const response: InvokeModelCommandOutput = await bedrockClient.send(command);
-	console.log("response.$metadata", response.$metadata);
+	console.debug("response.$metadata", response.$metadata);
 	const responseStatusCode = response.$metadata.httpStatusCode;
 	if (responseStatusCode !== 200) {
-		console.log("Bedrock request failed. Non 200 status code");
+		console.error("Bedrock request failed. Non 200 status code");
 		throw new Error(`Response status code: "${responseStatusCode}"`);
 	}
 
@@ -105,7 +105,7 @@ export const handler = async (event: event) => {
 	const pubObjectResponseStatusCode =
 		putObjectResponse.$metadata.httpStatusCode;
 	if (pubObjectResponseStatusCode !== 200) {
-		console.log("S3 request failed. Non 200 status code");
+		console.error("S3 request failed. Non 200 status code");
 		throw new Error(`Response status code: "${pubObjectResponseStatusCode}"`);
 	}
 

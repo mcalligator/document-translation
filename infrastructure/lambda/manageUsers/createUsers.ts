@@ -58,7 +58,7 @@ export default async function createUsers(userPoolId: string, body: string): Pro
       };
       const createUserCommand = new AdminCreateUserCommand(createUserParams);
       const createUserResponse = await cognitoClient.send(createUserCommand);
-      console.log(`newUser (temp ID): ${JSON.stringify(newUser)}`);
+      console.debug(`newUser (temp ID): ${JSON.stringify(newUser)}`);
       // Set user's local id to value of "sub" in identity store:
       const newUserId = createUserResponse.User!.Attributes!.find((attr) => {
         return attr.Name === "sub";
@@ -66,12 +66,12 @@ export default async function createUsers(userPoolId: string, body: string): Pro
       const tempUser = newUsers.find((user) => user.email === newUser.email);
       tempUser!.id = newUserId!.Value!;
       tempUser!.isNew = false;
-      console.log(`newUser (persisted ID): ${JSON.stringify(newUser)}`);
+      console.debug(`newUser (persisted ID): ${JSON.stringify(newUser)}`);
       usersAdded.push(tempUser!);
     } catch (error: unknown) {
       if (error instanceof UsernameExistsException) {
         responseMessage = `User ${newUser.email} already exists`;
-        console.log(responseMessage);
+        console.debug(responseMessage);
       } else {
         responseMessage = `Unable to save changes to Identity Store`;
         responseDetails += `Error adding user ${newUser.email}\n`;
@@ -84,7 +84,7 @@ export default async function createUsers(userPoolId: string, body: string): Pro
       throw new ManageUsersError(responseMessage, responseDetails);
     }
 
-    console.log("saveChanges: value of users");
+    console.debug("saveChanges: value of users");
     console.table(newUsers);
   }
 

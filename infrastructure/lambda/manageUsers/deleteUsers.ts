@@ -6,7 +6,7 @@ import {
 import { ManageUsersError } from "./classes.js";
 
 export default async function deleteUsers(userPoolId: string, rowsForDeletion: Set<string>) {
-  console.log(
+  console.debug(
     "Set of users scheduled for deletion: " + JSON.stringify(Array.from(rowsForDeletion)),
   ); // Delete after debugging
   const usersDeleted = new Set<string>();
@@ -29,7 +29,7 @@ export default async function deleteUsers(userPoolId: string, rowsForDeletion: S
       };
       const deleteUserCommand = new AdminDeleteUserCommand(deleteUserParams);
       const deleteUserResponse = await cognitoClient.send(deleteUserCommand);
-      console.log("Result of user deletion: " + JSON.stringify(deleteUserResponse));
+      console.debug("Result of user deletion: " + JSON.stringify(deleteUserResponse));
       usersDeleted.add(userId);
     } catch (error) {
       if (responseMessage === "") responseMessage = "Error deleting users";

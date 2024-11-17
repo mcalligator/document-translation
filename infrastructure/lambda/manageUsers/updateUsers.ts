@@ -51,7 +51,7 @@ export default async function updateUsers(userPoolId: string, body: string): Pro
         const updateUsercommand = new AdminUpdateUserAttributesCommand(updateUsersParams);
         await cognitoClient.send(updateUsercommand); // Successful response is blank, so no need to capture it
         user.isChanged = false;
-        console.log(`User updated: ${JSON.stringify(user)}`);
+        console.debug(`User updated: ${JSON.stringify(user)}`);
         usersUpdated.push(user);
       } catch (error) {
         if (error instanceof ManageUsersError) {

@@ -16,12 +16,12 @@ export const handler = async (event) => {
 		throw new Error("pathToDetailType is not defined.");
 	}
 
-	console.log("event:", JSON.stringify(event, null, 4));
+	console.debug("event:", JSON.stringify(event, null, 4));
 	const payload = Buffer.from(event.awslogs.data, "base64");
 	const parsed = JSON.parse(zlib.gunzipSync(payload).toString("utf8"));
 	const message = parsed.logEvents[0].message;
 	const parsedMessage = JSON.parse(message);
-	console.log("Decoded payload:", JSON.stringify(parsed));
+	console.debug("Decoded payload:", JSON.stringify(parsed));
 
 	const input = {
 		Entries: [
@@ -33,7 +33,7 @@ export const handler = async (event) => {
 		],
 	};
 
-	console.log("Input:", input);
+	console.debug("Input:", input);
 
 	const command = new PutEventsCommand(input);
 	const response = await client.send(command);

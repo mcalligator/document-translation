@@ -25,7 +25,7 @@ interface event {
 }
 
 export const handler = async (event: event) => {
-	console.log(JSON.stringify(event, null, 4));
+	console.debug(JSON.stringify(event, null, 4));
 
 	const modelId: string = event.ModelId;
 	if (!modelId) {
@@ -43,11 +43,11 @@ export const handler = async (event: event) => {
 		accept: "application/json",
 		modelId: modelId,
 	};
-	console.log("input", input);
+	console.debug("input", input);
 	const command = new InvokeModelCommand(input);
 
 	const response: InvokeModelCommandOutput = await bedrockClient.send(command);
-	console.log("response.$metadata", response.$metadata);
+	console.debug("response.$metadata", response.$metadata);
 	const responseStatusCode = response.$metadata.httpStatusCode;
 	if (responseStatusCode !== 200) {
 		throw new Error(`Response status code: "${responseStatusCode}"`);
