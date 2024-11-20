@@ -1,7 +1,7 @@
 import "./adminStyles.css";
 import "@cloudscape-design/global-styles/index.css";
 
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import { Checkbox, CheckboxProps } from "@cloudscape-design/components";
 
@@ -13,6 +13,8 @@ interface UserRowProps {
   deleteToggleChanges: Function;
   reportStatus: Function;
   fields: ColumnDefinition[];
+  columnWidths: Record<string, number>;
+  onInputResize: (field: string, width: number) => void;
 }
 
 export default function UserRow({
@@ -21,10 +23,19 @@ export default function UserRow({
   deleteToggleChanges,
   reportStatus,
   fields,
+  columnWidths,
+  onInputResize,
 }: UserRowProps) {
   const [userDetails, setUserDetails] = useState<UserData>(user);
   const [deleteChecked, setDeleteChecked] = useState(false); // Local state for Delete User tickbox
   const [fieldValidity, setFieldValidity] = useState(true);
+
+  const inputRefs = {
+    firstName: useRef<HTMLInputElement>(null),
+    lastName: useRef<HTMLInputElement>(null),
+    email: useRef<HTMLInputElement>(null),
+  };
+
   console.debug("deleteChecked rendered with box ticked " + deleteChecked);
   console.debug("Displaying details for user " + JSON.stringify(userDetails));
 
@@ -34,38 +45,52 @@ export default function UserRow({
     setDeleteChecked(false);
   }, [user]);
 
-  function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    /*
-    Updates field content with text typed, and resizes it appropriately
-    */
-    console.debug("handleChange - value before change: " + JSON.stringify(userDetails)); // <-- Delete after debugging
-    let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
-    const currentColumn = fields.find((col) => col.name === e.target.name);
-    const minWidth = currentColumn?.minWidth || 0;
-    const fieldName: string = e.target.name;
-    if (!userCopy.isNew) {
-      if (!userCopy.isChanged) {
-        // Only set these properties if change to field value not already flagged
-        userCopy.isChanged = true;
-        userCopy.isValid = false; // Assume invalid until explicitly validated in onBlur()
-      } else {
-        if (e.target.value === user[fieldName]) {
-          // Has value reverted to that persisted in the identity store?
-          console.debug(fieldName + " has reverted");
-          userCopy.isChanged = false;
-          userCopy.isValid = true;
+  const handleInputChange =
+    (field: keyof typeof inputRefs) => (e: ChangeEvent<HTMLInputElement>) => {
+      let userCopy: UserData = { ...userDetails }; // Local shadow variable for current user
+      const currentColumn = fields.find((col) => col.name === e.target.name);
+      const minWidth = currentColumn?.minWidth || 0;
+      const maxWidth = currentColumn?.maxWidth || 400;
+      const fieldName: string = e.target.name;
+      if (!userCopy.isNew) {
+        if (!userCopy.isChanged) {
+          // Only set these properties if change to field value not already flagged
+          userCopy.isChanged = true;
+          userCopy.isValid = false; // Assume invalid until explicitly validated in onBlur()
+        } else {
+          if (e.target.value === user[fieldName]) {
+            // Has value reverted to that persisted in the identity store?
+            console.debug(fieldName + " has reverted");
+            userCopy.isChanged = false;
+            userCopy.isValid = true;
+          }
         }
       }
-    }
-    const charWidth = 8; // Approximate width of a character in pixels
-    const newWidth = Math.max(e.target.value.length * charWidth, minWidth);
-    e.target.style.width = `${newWidth}px`;
 
-    console.debug(" handleChange - previous value of user: " + JSON.stringify(userCopy));  // <-- Delete after debugging
-    userCopy[fieldName] = e.target.value;
-    console.debug(" handleChange - Updated value of user: " + JSON.stringify(userCopy)); // <-- Delete after debugging
-    setUserDetails(userCopy);
-  }
+      userCopy[fieldName] = e.target.value;
+      setUserDetails(userCopy);
+      // Measure content width
+      const input = inputRefs[field].current;
+      if (input) {
+        // Create temporary span to measure text width
+        const span = document.createElement("span");
+        span.style.visibility = "hidden";
+        span.style.position = "absolute";
+        span.style.whiteSpace = "pre";
+        span.style.font = window.getComputedStyle(input).font;
+        span.textContent = e.target.value;
+        document.body.appendChild(span);
+
+        const textWidth = span.offsetWidth;
+        document.body.removeChild(span);
+
+        // Add padding for input
+        const newWidth = textWidth + 20;
+        if (newWidth > columnWidths[field]) {
+          onInputResize(field, newWidth);
+        }
+      }
+    };
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     console.debug("handleBlur - user: " + JSON.stringify(userDetails));
@@ -114,46 +139,49 @@ export default function UserRow({
 
   return (
     <>
-      <td>
+      <td style={{ width: columnWidths.firstName }}>
         <input
-          name={fields[0].name}
+          ref={inputRefs.firstName}
+          name={"firstName"}
           type="text"
-          style={{ width: fields[0].minWidth }} // Replace with dynamic calculation of longest entry in this column
+          style={{ width: "100%" }}
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.firstName}
-          onChange={handleChange}
+          onChange={handleInputChange("firstName")}
           onBlur={handleBlur}
         />
       </td>
-      <td>
+      <td style={{ width: columnWidths.lastName }}>
         <input
-          name={fields[1].name}
+          ref={inputRefs.lastName}
+          name={"lastName"}
           type="text"
-          style={{ width: fields[1].minWidth }} // Replace with dynamic calculation of longest entry in this column
+          style={{ width: "100%" }}
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           value={userDetails.lastName}
-          onChange={handleChange}
+          onChange={handleInputChange("lastName")}
           onBlur={handleBlur}
         />
       </td>
-      <td>
+      <td style={{ width: columnWidths.email }}>
         <input
-          name={fields[2].name}
+          ref={inputRefs.email}
+          name={"email"}
           type="email"
-          style={{ width: fields[2].minWidth }} // Replace with dynamic calculation of longest entry in this column
+          style={{ width: "100%" }}
           required={true}
           className={fieldValidity ? "input.valid" : "input.error"}
           placeholder="user@domain"
           maxLength={64}
           pattern="[a-zA-Z0-9.]@(\S)+\.\D"
           value={userDetails.email}
-          onChange={handleChange}
+          onChange={handleInputChange("email")}
           onBlur={handleBlur}
         />
       </td>
-      <td className="centred">
+      <td className="centred" style={{ width: columnWidths.delete }}>
         <Checkbox
           checked={deleteChecked}
           onChange={handleDeleteToggle}

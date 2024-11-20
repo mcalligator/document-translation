@@ -4,7 +4,7 @@ import "@cloudscape-design/global-styles/index.css";
 
 import cfnOutputs from "../../cfnOutputs.json";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   Box,
@@ -23,16 +23,14 @@ import deleteUsers from "./util/deleteUsers";
 import retrieveUsers from "./util/retrieveUsers";
 import saveChangedUsers from "./util/saveChangedUsers";
 import saveNewUsers from "./util/saveNewUsers";
-import { Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
+import { ColumnDefinition, Credentials, DeleteUsersOutcome, UserData } from "./util/typeExtensions";
 
 import UserTable from "./userTable";
 
 export default function AdminPanel(currentUser: any) {
   /* To do:
     1. Check for expired AWS Session Token and refresh.
-    2. Get Input fields for new users to be same width as those above when data being entered.
-    3. *** Add pagination to retrieving users from Cognito - fast-follow.
-    4. Change input fields' colour to signify invalid entry.
+    2. Change input fields' colour to signify invalid entry.
   */
 
   const tenantId = extractField(currentUser, "custom:tenantId");
@@ -45,7 +43,9 @@ export default function AdminPanel(currentUser: any) {
   const [statusMessage, setStatusMessage] = useState("");
   const [rowsToDelete, setrowsToDelete] = useState(new Set<string>());
   const [disableDeleteButton, setDisableDeleteButton] = useState(true);
+  const [panelWidth, setpanelWidth] = useState(1000);
 
+  const panelRef = useRef<HTMLDivElement>(null);
   console.debug(`User passed into AdminPanel:\n${JSON.stringify(currentUser)}`);
 
   useEffect(() => {
@@ -82,6 +82,22 @@ export default function AdminPanel(currentUser: any) {
     };
     fetchUsers();
   }, [adminCredentials]);
+
+  // Detect and measure changes to the size of AdminPanel for calculating column widths
+  useEffect(() => {
+    if (!panelRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setpanelWidth(entry.contentRect.width);
+      }
+    });
+    resizeObserver.observe(panelRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     // Retrieve subscription status
@@ -298,11 +314,28 @@ export default function AdminPanel(currentUser: any) {
     setUsers(structuredClone(originalUsers));
   }
 
-  const columns = [
-    { name: "firstName", title: "First Name", minWidth: 85 },
-    { name: "lastName", title: "Last Name", minWidth: 85 },
-    { name: "email", title: "Email", minWidth: 235 },
-    { name: "delete", title: "Delete?", minWidth: 10 },
+  // To do: calculate maxWidth from size of display
+  // const displayWidth =
+  const columns: ColumnDefinition[] = [
+    {
+      name: "firstName",
+      title: "First Name",
+      minWidth: 85,
+      maxWidth: (panelWidth - 10) / 4,
+    },
+    {
+      name: "lastName",
+      title: "Last Name",
+      minWidth: 85,
+      maxWidth: (panelWidth - 10) / 4,
+    },
+    {
+      name: "email",
+      title: "Email",
+      minWidth: 235,
+      maxWidth: (panelWidth - 10) / 2,
+    },
+    { name: "delete", title: "Delete?", minWidth: 40, maxWidth: 40 },
   ];
 
   return (
@@ -331,52 +364,54 @@ export default function AdminPanel(currentUser: any) {
           </SpaceBetween>
         }
       >
-        <Container>
-          <Form>
-            <SpaceBetween direction="vertical" size="m">
-              <UserTable
-                columnDefinitions={columns}
-                users={users}
-                updateUserSetWithChanges={updateUserSetWithChanges} // Callback function to surface changes for write
-                deleteToggleChanges={deleteToggleChanges}
-                reportStatus={reportStatus}
-              ></UserTable>
-              <SpaceBetween direction="horizontal" size="l">
-                <Button
-                  disabled={!subscription || subscription.userCount < 1}
-                  variant="normal"
-                  onClick={handleClickAddUser}
-                >
-                  Add New User
-                </Button>
-                <Button
-                  disabled={disableDeleteButton}
-                  variant="normal"
-                  onClick={handleClickDeleteUser}
-                >
-                  Delete User
-                </Button>
-                <Button
-                  onClick={handleCancelClick}
-                  // disabled={userInfoChanged}
-                  variant="normal"
-                >
-                  Cancel
-                </Button>
-                <Box color="text-label" variant="p" textAlign="center">
-                  {statusMessage}
-                </Box>
-                <Button
-                  // disabled={userInfoChanged}
-                  variant="normal"
-                  onClick={handleClickSaveChanges}
-                >
-                  Save Changes
-                </Button>
+        <div ref={panelRef}>  {/* Size is tracked for calculating table column widths */}
+          <Container>
+            <Form>
+              <SpaceBetween direction="vertical" size="m">
+                <UserTable
+                  columnDefinitions={columns}
+                  users={users}
+                  updateUserSetWithChanges={updateUserSetWithChanges} // Callback function to surface changes for write
+                  deleteToggleChanges={deleteToggleChanges}
+                  reportStatus={reportStatus}
+                ></UserTable>
+                <SpaceBetween direction="horizontal" size="l">
+                  <Button
+                    disabled={!subscription || subscription.userCount < 1}
+                    variant="normal"
+                    onClick={handleClickAddUser}
+                  >
+                    Add New User
+                  </Button>
+                  <Button
+                    disabled={disableDeleteButton}
+                    variant="normal"
+                    onClick={handleClickDeleteUser}
+                  >
+                    Delete User
+                  </Button>
+                  <Button
+                    onClick={handleCancelClick}
+                    // disabled={userInfoChanged}
+                    variant="normal"
+                  >
+                    Cancel
+                  </Button>
+                  <Box color="text-label" variant="p" textAlign="center">
+                    {statusMessage}
+                  </Box>
+                  <Button
+                    // disabled={userInfoChanged}
+                    variant="normal"
+                    onClick={handleClickSaveChanges}
+                  >
+                    Save Changes
+                  </Button>
+                </SpaceBetween>
               </SpaceBetween>
-            </SpaceBetween>
-          </Form>
-        </Container>
+            </Form>
+          </Container>
+        </div>
       </ContentLayout>
     </>
   );

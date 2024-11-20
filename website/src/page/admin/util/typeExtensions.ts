@@ -9,6 +9,7 @@ export interface ColumnDefinition {
   name: string;
   title: string;
   minWidth: number;
+  maxWidth: number;
 }
 export interface UserData extends Record<string, any> {
   id: string;

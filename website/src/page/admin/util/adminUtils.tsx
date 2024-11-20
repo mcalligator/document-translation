@@ -1,4 +1,4 @@
-import { ColumnDefinition, Credentials } from "./typeExtensions";
+import { Credentials } from "./typeExtensions";
 
 import { InvokeCommand, InvokeCommandInput, LambdaClient } from "@aws-sdk/client-lambda";
 
