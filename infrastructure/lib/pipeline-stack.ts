@@ -208,6 +208,7 @@ export class pipelineStack extends cdk.Stack {
 						logGroup: new LogGroup(this, "cdkPipelineLogGroup", {
 							retention: cdk.aws_logs.RetentionDays.ONE_MONTH,
 							removalPolicy: removalPolicy,
+							logGroupName: "CDKPipeline"
 						})
 					}
 				}
